@@ -28,7 +28,7 @@ export const appCredentialService = {
             .createQueryBuilder('app_credential')
             .where({ projectId })
         if (appName !== undefined) {
-            queryBuilder = queryBuilder.where({ appName })
+            queryBuilder = queryBuilder.andWhere({ appName })
         }
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<AppCredential>(data, cursor)
