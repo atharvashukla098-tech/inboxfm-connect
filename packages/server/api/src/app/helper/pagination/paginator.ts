@@ -304,16 +304,22 @@ export default class Paginator<Entity extends ObjectLiteral> {
             }
         }
 
-        const cursors: CursorParam = {}
-        const columns = atob(cursor).split(',')
-        columns.forEach((column) => {
-            const [key, raw] = column.split(':')
-            const type = this.getEntityPropertyType(key)
-            const value = decodeByType(type, raw)
-            cursors[key] = value
-        })
+        try {
+            const cursors: CursorParam = {}
+            const columns = atob(cursor).split(',')
+            columns.forEach((column) => {
+                const [key, raw] = column.split(':')
+                if (key === undefined || raw === undefined) return
+                const type = this.getEntityPropertyType(key)
+                const value = decodeByType(type, raw)
+                cursors[key] = value
+            })
 
-        return cursors
+            return cursors
+        }
+        catch {
+            return {}
+        }
     }
 
     private getEntityPropertyType(key: string): string {
