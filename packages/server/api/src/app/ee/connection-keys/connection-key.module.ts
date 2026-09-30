@@ -138,6 +138,17 @@ const connectionKeyController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.delete(
         '/:connectionkeyId',
+        {
+            config: {
+                security: securityAccess.project(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.PARAM,
+                    },
+                ),
+            },
+        },
         async (
             request: FastifyRequest<{
                 Params: {
