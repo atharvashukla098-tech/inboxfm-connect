@@ -26,9 +26,10 @@ export function isNewerVersion(a: string, b: string): boolean {
 export function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
     const seen = new Map<string, PieceMetadataSchema>()
     for (const piece of pieces) {
-        const existing = seen.get(piece.name)
+        const key = `${piece.name}:${piece.platformId ?? ''}`
+        const existing = seen.get(key)
         if (isNil(existing) || isNewerVersion(piece.version, existing.version)) {
-            seen.set(piece.name, piece)
+            seen.set(key, piece)
         }
     }
     return Array.from(seen.values())
