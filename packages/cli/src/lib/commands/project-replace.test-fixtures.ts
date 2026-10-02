@@ -1,4 +1,4 @@
-import { ProjectReplaceArtifact } from '@inboxfm-connect/shared'
+import { ProjectReplaceArtifact, PreflightError, ProjectReplaceResourceKind } from '@inboxfm-connect/shared'
 
 export const DEST_BASE = 'https://dest.example.com'
 export const SOURCE_BASE = 'https://source.example.com'
@@ -14,7 +14,7 @@ export const SOURCE_TOKEN = 'source-token-xyz789'
  */
 export function buildArtifact(overrides: {
     preflightPassed?: boolean
-    preflightErrors?: Array<{ kind: string, message: string }>
+    preflightErrors?: PreflightError[]
     summary?: { created: number, updated: number, deleted: number, unchanged: number }
 } = {}): ProjectReplaceArtifact {
     const preflightPassed = overrides.preflightPassed ?? true
@@ -46,7 +46,7 @@ export function buildArtifact(overrides: {
                 },
             },
             changes: {
-                creates: [{ kind: 'flow', externalId: 'flow_1' }],
+                creates: [{ kind: 'flow' as ProjectReplaceResourceKind, externalId: 'flow_1', op: 'CREATE' }],
                 updates: [],
                 deletes: [],
                 unchanged: [],
