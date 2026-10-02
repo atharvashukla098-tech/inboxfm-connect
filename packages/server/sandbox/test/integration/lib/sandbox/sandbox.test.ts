@@ -68,7 +68,6 @@ function createTestProcessMaker() {
 const defaultOptions = {
     env: { MY_VAR: 'value' },
     memoryLimitMb: 256,
-    cpuMsPerSec: 1000,
     timeLimitSeconds: 300,
     reusable: false,
     maxHttpBufferSizeBytes: 100 * 1024 * 1024,
@@ -134,7 +133,6 @@ describe('createSandbox', () => {
                     }),
                     resourceLimits: {
                         memoryLimitMb: 256,
-                        cpuMsPerSec: 1000,
                         timeLimitSeconds: 300,
                     },
                 }),

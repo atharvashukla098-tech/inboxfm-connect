@@ -4,16 +4,16 @@
 A Project is the workspace within a platform where flows, connections, tables, and other resources live. Every platform has at least one project. Projects are always scoped to a platform via `platformId`. The Community edition allows a single user to have one personal project; the EE platform-projects module extends this with team projects, per-project limits, and an admin list API. Projects support soft-delete (via `deleted` timestamp), icon customization, concurrency pool assignment, and optional release management.
 
 ## Key Files
-- `packages/server/api/src/app/project/project-controller.ts` — GET `/:id`, GET `/`, POST `/:id` routes (CE level)
 - `packages/server/api/src/app/project/project-service.ts` — core service: `create`, `update`, `getOne`, `getOneOrThrow`, `getAllForUser`, `getUserProjectOrThrow`
 - `packages/server/api/src/app/project/project-entity.ts` — `project` TypeORM entity with all relations
 - `packages/server/api/src/app/project/project-repo.ts` — `repoFactory` wrapper with optional `EntityManager` support
 - `packages/server/api/src/app/project/project-hooks.ts` — `hooksFactory` hook point for EE post-create behavior
 - `packages/server/api/src/app/project/project-worker-controller.ts` — internal endpoint used by engine to read project data
 - `packages/core/shared/src/lib/management/project/project.ts` — `Project`, `ProjectPlan`, `ProjectIcon`, `UpdateProjectRequestInCommunity` schemas
-- `packages/web/src/features/projects/components/projects-selector.tsx` — project-switcher dropdown in the sidebar
-- `packages/web/src/features/projects/components/platform-switcher.tsx` — platform-level switcher component
-- `packages/web/src/features/projects/stores/project-collection.ts` — Zustand store for current project
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 All editions. The CE controller exposes a minimal set: get, list (returns only the personal project), and update display name/metadata. EE adds `ee-projects` module with `platformProjectService` for full admin CRUD, project limits, and per-project piece filters.

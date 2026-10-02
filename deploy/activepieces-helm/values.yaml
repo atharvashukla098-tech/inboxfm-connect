@@ -25,7 +25,18 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: ghcr.io/activepieces/activepieces
+  # This repository publishes NO container image, so there is nothing to pull by default. The value
+  # below is the local build tag produced by `docker build -t inboxfm-connect:local .` in this repo,
+  # which is also what docker-compose.yml uses.
+  #
+  # It deliberately does NOT default to ghcr.io/activepieces/activepieces any more: a chart that
+  # silently pulled the upstream image would run Activepieces instead of this fork and quietly lose
+  # every change in it. Point this at your own registry before installing, e.g.
+  #   helm install inboxfm ./deploy/activepieces-helm \
+  #     --set image.repository=registry.example.com/inboxfm-connect --set image.tag=1.2.3
+  # With no such image the install fails loudly with ImagePullBackOff rather than running the
+  # wrong software.
+  repository: inboxfm-connect
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.

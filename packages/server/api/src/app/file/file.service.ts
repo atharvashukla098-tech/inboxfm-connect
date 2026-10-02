@@ -30,7 +30,21 @@ const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
     })
 }
 export const fileService = (log: FastifyBaseLogger) => ({
+    /**
+     * A caller-supplied `fileId` is an opaque handle, not proof of ownership. `save()` treats it as a
+     * primary key, so without this guard any principal that can name an id silently re-owns the row
+     * (projectId/platformId/type/fileName/data are all overwritten) and — on S3-backed deployments —
+     * reuses the victim's `s3Key`, writing attacker bytes into the victim's object.
+     *
+     * Exposed separately so a route can reject a takeover *before* it mints any read capability
+     * (a read URL is bound to the fileId, not to a project, so minting one would hand the attacker
+     * a working download link for the row they just claimed).
+     */
+    async assertCanSave(params: AssertOwnershipParams): Promise<void> {
+        await assertFileIdIsNotOwnedByAnotherScope(params)
+    },
     async save(params: SaveParams): Promise<File> {
+        await assertFileIdIsNotOwnedByAnotherScope(params)
         const baseFile: BaseFile = {
             id: params.fileId ?? apId(),
             projectId: params.projectId,
@@ -302,6 +316,37 @@ function normalizeTypeFilter(type: FileType | FileType[] | undefined) {
     return Array.isArray(type) ? In(type) : type
 }
 
+/**
+ * `save()` overwrites every supplied column of an existing row when the id already exists, so the id
+ * must belong to the caller's own scope before any write happens. New ids, and same-scope re-writes
+ * (the engine legitimately re-PUTs the same step-file id), pass through untouched.
+ *
+ * Both scope columns are normalized to `null` because TypeORM persists an absent `projectId` /
+ * `platformId` as NULL while the caller may hand us `undefined` — comparing them raw would reject
+ * the platform's own rewrites of its own rows.
+ */
+async function assertFileIdIsNotOwnedByAnotherScope({ fileId, projectId, platformId }: AssertOwnershipParams): Promise<void> {
+    if (isNil(fileId)) {
+        return
+    }
+    const existingFile = await fileRepo().findOneBy({ id: fileId })
+    if (isNil(existingFile)) {
+        return
+    }
+    const isSameScope =
+        (existingFile.projectId ?? null) === (projectId ?? null)
+        && (existingFile.platformId ?? null) === (platformId ?? null)
+    if (isSameScope) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: {
+            message: 'File does not belong to the requesting project',
+        },
+    })
+}
+
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
@@ -349,6 +394,12 @@ type GetOneParams = {
     fileId?: FileId
     projectId?: ProjectId
     type?: FileType | FileType[]
+}
+
+type AssertOwnershipParams = {
+    fileId: FileId | undefined
+    projectId: ProjectId | undefined
+    platformId: string | undefined
 }
 
 type FileToken = {

@@ -11,8 +11,10 @@ A Platform is the top-level tenant namespace in Activepieces. Every installation
 - `packages/server/api/src/app/platform/platform-jobs.ts` — `HARD_DELETE_PLATFORM` job handler
 - `packages/core/shared/src/lib/management/platform/platform.model.ts` — `Platform`, `PlatformWithoutSensitiveData`, `PlatformPlan`, `PlatformUsage`, `PlatformThemeColors`, `PieceSelectorConfig`, `PieceSelectorTabConfig`, `PieceSelectorTabSection` Zod schemas
 - `packages/core/shared/src/lib/management/platform/platform.request.ts` — `UpdatePlatformRequestBody`
-- `packages/web/src/hooks/platform-hooks.ts` — `useCurrentPlatform()` React Query hook
-- `packages/web/src/features/platform-admin/hooks/branding-hooks.ts` — branding mutation hooks
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 All editions. The `PlatformPlan` feature flags (e.g. `customAppearanceEnabled`, `ssoEnabled`, `agentsEnabled`) control which capabilities are active. Community edition uses `OPEN_SOURCE_PLAN` with all booleans set to their CE defaults. `usage` is only populated on non-Community editions.

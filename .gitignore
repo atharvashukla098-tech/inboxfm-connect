@@ -1,5 +1,9 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# Coverage output. `/coverage` only matched the repo root; the per-package `coverage/` directories
+# that vitest writes (and that ci.yml uploads as artifacts) need the recursive form.
+**/coverage/
+
 # Claude Code worktrees
 .claude/worktrees/
 

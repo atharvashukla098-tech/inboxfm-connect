@@ -18,7 +18,10 @@ Both are 64 characters, stored only as a SHA-256 hash (plaintext returned once o
 - `packages/core/shared/src/lib/ee/api-key/index.ts` — `ApiKey`, `ApiKeyResponseWithValue`, `ApiKeyResponseWithoutValue`, `CreateApiKeyRequest` (+ `isApiKeyExpiryValid` helper)
 - `packages/core/shared/src/lib/connect-api-key/index.ts` — `ConnectApiKey`, `ConnectApiKeyResponseWithValue`, `ConnectApiKeyResponseWithoutValue`, `CreateConnectApiKeyRequest`
 - `packages/server/api/src/app/database/migration/postgres/1790152916876-AddApiKeyExpiry.ts` — adds `expiresAt` to both tables
-- `packages/web/src/features/platform-admin/api/api-key-api.ts` / `hooks/api-key-hooks.ts` / `app/routes/platform/security/api-keys/` — frontend for `sk-` keys only (no Connect API key UI yet — see issue #27)
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - `sk-` create/list/delete/rotate: Enterprise and Cloud only, gated by `platform.plan.apiKeysEnabled`. CE has no registered endpoint to mint `sk-` keys.

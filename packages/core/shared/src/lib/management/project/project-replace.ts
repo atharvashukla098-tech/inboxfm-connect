@@ -250,6 +250,10 @@ export const ProjectReplacePlan = z.object({
         connections: ConnectionPreflightReportSchema.optional(),
     }),
     connectionMappings: z.array(ConnectionMappingSchema).optional(),
+    // Signed alongside connectionMappings. These decide which provider each mirrored agent points
+    // at, so leaving them out of the signature let a valid plan be applied with different providers
+    // than the one that was reviewed and signed (issue #126).
+    providerMappings: z.array(ProviderMappingSchema).optional(),
     changes: z.object({
         creates: z.array(ProjectReplaceDiffItem),
         updates: z.array(ProjectReplaceDiffItem),

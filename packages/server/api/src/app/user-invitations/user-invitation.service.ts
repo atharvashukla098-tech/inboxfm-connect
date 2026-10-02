@@ -111,16 +111,52 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         status,
     }: CreateParams): Promise<UserInvitationWithLink> {
         const id = apId()
-        await repo().upsert({
-            id,
-            status,
-            type,
-            email: email.toLowerCase().trim(),
-            platformId,
-            projectRoleId: type === InvitationType.PLATFORM ? undefined : projectRoleId!,
-            platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
-            projectId: type === InvitationType.PLATFORM ? undefined : projectId!,
-        }, ['email', 'platformId', 'projectId'])
+        const normalizedEmail = email.toLowerCase().trim()
+
+        const projectRoleIdValue = type === InvitationType.PLATFORM ? undefined : projectRoleId
+        const platformRoleValue = type === InvitationType.PROJECT ? undefined : platformRole
+        const projectIdValue = type === InvitationType.PLATFORM ? undefined : projectId
+
+        if (type === InvitationType.PLATFORM) {
+            await repo()
+                .createQueryBuilder()
+                .insert()
+                .values({
+                    id,
+                    status,
+                    type,
+                    email: normalizedEmail,
+                    platformId,
+                    platformRole: platformRoleValue,
+                    projectId: null,
+                    projectRoleId: null,
+                })
+                .orUpdate(
+                    ['status', 'type', 'platformRole', 'updated'],
+                    ['email', 'platformId'],
+                )
+                .execute()
+        }
+        else {
+            await repo()
+                .createQueryBuilder()
+                .insert()
+                .values({
+                    id,
+                    status,
+                    type,
+                    email: normalizedEmail,
+                    platformId,
+                    projectId: projectIdValue,
+                    projectRoleId: projectRoleIdValue,
+                    platformRole: null,
+                })
+                .orUpdate(
+                    ['status', 'type', 'projectRoleId', 'updated'],
+                    ['email', 'platformId', 'projectId'],
+                )
+                .execute()
+        }
 
         const userInvitation = await this.getOneOrThrow({
             id,

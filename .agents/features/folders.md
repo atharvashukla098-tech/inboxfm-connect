@@ -6,14 +6,17 @@
 Folders provide a lightweight organizational layer for flows within a project. Each folder has a display name (unique case-insensitively per project) and a display order. Flows can be assigned to a folder via their `folderId` field. The folder list endpoint returns `numberOfFlows` and `numberOfTables` counts alongside each folder, computed via correlated subqueries. A special sentinel value `NULL` (string `"NULL"`) represents uncategorized flows that have no folder. Creating or renaming a folder fires audit events. Folder names are enforced as unique per project (case-insensitive).
 
 ## Key Files
-- `packages/server/api/src/app/flows/folder/folder.module.ts` — Fastify plugin (module + controller combined)
-- `packages/server/api/src/app/flows/folder/folder.service.ts` — CRUD service (`flowFolderService`)
-- `packages/server/api/src/app/flows/folder/folder.entity.ts` — TypeORM entity
-- `packages/core/shared/src/lib/automation/flows/folders/folder.ts` — `Folder`, `FolderDto`, `FolderId`, `UncategorizedFolderId`
-- `packages/core/shared/src/lib/automation/flows/folders/folder-requests.ts` — `CreateFolderRequest`, `UpdateFolderRequest`, `DeleteFolderRequest`, `ListFolderRequest`
-- `packages/web/src/features/folders/components/rename-folder-dialog.tsx` — rename dialog
+- `packages/core/execution/src/lib/flows/folders/folder.ts` — Fastify plugin (module + controller combined)
+- `packages/core/execution/src/lib/flows/folders/folder.ts` — CRUD service (`flowFolderService`)
+- `packages/core/execution/src/lib/flows/folders/folder.ts` — TypeORM entity
+- `packages/core/execution/src/lib/flows/folders/folder.ts` — `Folder`, `FolderDto`, `FolderId`, `UncategorizedFolderId`
+- `packages/core/execution/src/lib/flows/folders/folder-requests.ts` — `CreateFolderRequest`, `UpdateFolderRequest`, `DeleteFolderRequest`, `ListFolderRequest`
 - `packages/web/src/features/folders/api/` — frontend API client
 - `packages/web/src/features/folders/hooks/` — TanStack Query hooks
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Fully available — no plan flag required.

@@ -2,6 +2,7 @@ import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@inboxfm-co
 import { EmbedSubdomain, EmbedSubdomainStatus } from '@inboxfm-connect/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { distributedLock } from '../../database/redis-connections'
 import { cloudflareService } from './cloudflare.service'
 import { EmbedSubdomainEntity } from './embed-subdomain.entity'
 
@@ -9,62 +10,67 @@ const repo = repoFactory<EmbedSubdomain>(EmbedSubdomainEntity)
 
 export const embedSubdomainService = (log: FastifyBaseLogger) => ({
     async upsert({ platformId, hostname }: { platformId: string, hostname: string }): Promise<EmbedSubdomain> {
-        const existing = await repo().findOneBy({ platformId })
-        if (!isNil(existing) && existing.hostname === hostname) {
-            return existing
-        }
+        return distributedLock(log).runExclusive({
+            key: `embed-subdomain-upsert:${platformId}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                const existing = await repo().findOneBy({ platformId })
+                if (!isNil(existing) && existing.hostname === hostname) {
+                    return existing
+                }
 
-        const collidingDb = await repo().findOneBy({ hostname })
-        if (!isNil(collidingDb) && collidingDb.platformId !== platformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'This hostname is already in use',
-                },
-            })
-        }
+                const collidingDb = await repo().findOneBy({ hostname })
+                if (!isNil(collidingDb) && collidingDb.platformId !== platformId) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'This hostname is already in use',
+                        },
+                    })
+                }
 
-        const existsInCloudflare = await cloudflareService(log).hostnameExists({ hostname })
-        if (existsInCloudflare) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'This hostname is already registered with Cloudflare',
-                },
-            })
-        }
+                const existsInCloudflare = await cloudflareService(log).hostnameExists({ hostname })
+                if (existsInCloudflare) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'This hostname is already registered with Cloudflare',
+                        },
+                    })
+                }
 
-        const newCloudflare = await cloudflareService(log).createCustomHostname({ hostname })
+                const newCloudflare = await cloudflareService(log).createCustomHostname({ hostname })
 
-        if (isNil(existing)) {
-            const subdomain: Omit<EmbedSubdomain, 'created' | 'updated'> = {
-                id: apId(),
-                platformId,
-                hostname,
-                status: mapCloudflareStatus({ status: newCloudflare.status, sslStatus: newCloudflare.sslStatus }),
-                cloudflareId: newCloudflare.cloudflareId,
-                verificationRecords: newCloudflare.verificationRecords,
-            }
-            return repo().save(subdomain)
-        }
+                if (isNil(existing)) {
+                    const subdomain: Omit<EmbedSubdomain, 'created' | 'updated'> = {
+                        id: apId(),
+                        platformId,
+                        hostname,
+                        status: mapCloudflareStatus({ status: newCloudflare.status, sslStatus: newCloudflare.sslStatus }),
+                        cloudflareId: newCloudflare.cloudflareId,
+                        verificationRecords: newCloudflare.verificationRecords,
+                    }
+                    return repo().save(subdomain)
+                }
 
-        const oldCloudflareId = existing.cloudflareId
-        const updated = await repo().save({
-            ...existing,
-            hostname,
-            cloudflareId: newCloudflare.cloudflareId,
-            verificationRecords: newCloudflare.verificationRecords,
-            status: mapCloudflareStatus({ status: newCloudflare.status, sslStatus: newCloudflare.sslStatus }),
+                const oldCloudflareId = existing.cloudflareId
+                const updated = await repo().save({
+                    ...existing,
+                    hostname,
+                    cloudflareId: newCloudflare.cloudflareId,
+                    verificationRecords: newCloudflare.verificationRecords,
+                    status: mapCloudflareStatus({ status: newCloudflare.status, sslStatus: newCloudflare.sslStatus }),
+                })
+
+                const deleteResult = await tryCatch(() => cloudflareService(log).deleteCustomHostname({ cloudflareId: oldCloudflareId }))
+                if (deleteResult.error) {
+                    log.warn({ platform: { id: platformId }, oldCloudflareId, error: deleteResult.error }, 'Failed to delete previous Cloudflare custom hostname; manual cleanup may be required')
+                }
+
+                return updated
+            },
         })
-
-        const deleteResult = await tryCatch(() => cloudflareService(log).deleteCustomHostname({ cloudflareId: oldCloudflareId }))
-        if (deleteResult.error) {
-            log.warn({ platform: { id: platformId }, oldCloudflareId, error: deleteResult.error }, 'Failed to delete previous Cloudflare custom hostname; manual cleanup may be required')
-        }
-
-        return updated
     },
-
     async getByPlatformId({ platformId }: { platformId: string }): Promise<EmbedSubdomain | null> {
         return repo().findOneBy({ platformId })
     },

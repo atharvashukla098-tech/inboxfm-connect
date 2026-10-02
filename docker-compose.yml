@@ -17,10 +17,10 @@ services:
       retries: 5
       start_period: 5s
     networks:
-      - activepieces
+      - inboxfm
   app:
     image: inboxfm-connect:local
-    container_name: activepieces-app
+    container_name: inboxfm-connect-app
     restart: unless-stopped
     expose:
       - '80'
@@ -45,7 +45,7 @@ services:
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
-      - activepieces
+      - inboxfm
     build:
       context: .
       dockerfile: Dockerfile
@@ -65,7 +65,7 @@ services:
     volumes:
       - ./cache:/usr/src/app/cache
     networks:
-      - activepieces
+      - inboxfm
   postgres:
     image: 'pgvector/pgvector:0.8.0-pg14'
     container_name: postgres
@@ -78,7 +78,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - activepieces
+      - inboxfm
   redis:
     image: 'redis:7.0.7'
     container_name: redis
@@ -86,9 +86,9 @@ services:
     volumes:
       - 'redis_data:/data'
     networks:
-      - activepieces
+      - inboxfm
 volumes:
   postgres_data:
   redis_data:
 networks:
-  activepieces:
+  inboxfm:

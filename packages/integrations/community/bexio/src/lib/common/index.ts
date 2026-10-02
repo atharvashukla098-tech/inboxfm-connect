@@ -5,6 +5,34 @@ export const bexioCommon = {
   api_version: '3.0',
 };
 
+/**
+ * Fetches a dropdown/status list, degrading to an empty list on failure instead of propagating.
+ *
+ * The consumers of these lists either fall back to a numeric ID field or poll an empty set, so a
+ * failed request must not throw — but it must not be silent either: an empty list is
+ * indistinguishable from a legitimately empty collection, which previously left a broken connection
+ * looking like a deliberate choice. Logging keeps the degradation diagnosable.
+ *
+ * Endpoints are loaded independently on purpose. A single shared try/catch around several calls
+ * would mean one failure suppresses the unrelated dropdowns that did load successfully.
+ */
+export async function fetchBexioListOrLog<T>({
+  client,
+  endpoint,
+  label,
+}: FetchBexioListOrLogParams): Promise<T[]> {
+  try {
+    return await client.get<T[]>(endpoint);
+  } catch (error: unknown) {
+    const reason = extractErrorMessage(error, `Failed to load ${label}`);
+    console.error(
+      `Failed to load ${label} from Bexio API (${endpoint}): ${reason}`,
+      error
+    );
+    return [];
+  }
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -75,3 +103,15 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
 
   return fallback;
 }
+
+type FetchBexioListOrLogParams = {
+  client: BexioListFetcher;
+  endpoint: string;
+  label: string;
+};
+
+// Declared structurally rather than as BexioClient: this helper only needs `get`, and client.ts
+// already imports from this module, so a concrete reference would be circular.
+type BexioListFetcher = {
+  get: <T>(endpoint: string, queryParams?: Record<string, string>) => Promise<T>;
+};

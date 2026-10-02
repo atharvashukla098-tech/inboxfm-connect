@@ -6,6 +6,12 @@ export AP_PORT="${AP_PORT:-80}"
 echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
 echo "AP_PORT: $AP_PORT"
 
+# The issuer must match whatever the API accepts, so it is resolved from the environment exactly
+# like the server's jwtUtils does (AP_JWT_ISSUER, falling back to the legacy upstream value). A
+# hardcoded issuer here would mint worker tokens the API rejects as soon as an operator sets
+# AP_JWT_ISSUER, locking the worker out of its own API.
+AP_JWT_ISSUER="${AP_JWT_ISSUER:-activepieces}"
+
 # Auto-generate worker token if not set and JWT secret is available
 if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
     echo "Auto-generating AP_WORKER_TOKEN..."
@@ -15,7 +21,7 @@ if [ -z "$AP_WORKER_TOKEN" ] && [ -n "$AP_JWT_SECRET" ]; then
         const token = jwt.sign(
             { id: crypto.randomUUID(), type: 'WORKER' },
             process.env.AP_JWT_SECRET,
-            { expiresIn: '100y', keyid: '1', algorithm: 'HS256', issuer: 'activepieces' }
+            { expiresIn: '100y', keyid: '1', algorithm: 'HS256', issuer: process.env.AP_JWT_ISSUER }
         );
         process.stdout.write(token);
     ")
@@ -27,7 +33,7 @@ APPS=""
 if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
     APPS="${APPS}
     {
-        name: 'activepieces-app',
+        name: 'inboxfm-connect-app',
         script: 'packages/server/api/dist/src/bootstrap.js',
         node_args: '--enable-source-maps',
         instances: 1,
@@ -39,7 +45,7 @@ fi
 if [ "$AP_CONTAINER_TYPE" = "WORKER" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP" ]; then
     APPS="${APPS}
     {
-        name: 'activepieces-worker',
+        name: 'inboxfm-connect-worker',
         script: 'packages/server/worker/dist/src/bootstrap.js',
         node_args: '--enable-source-maps',
         instances: 1,
@@ -54,5 +60,5 @@ module.exports = {
 };
 ENDOFFILE
 
-echo "Starting Activepieces with PM2 (${AP_CONTAINER_TYPE} mode)"
+echo "Starting Inboxfm Connect with PM2 (${AP_CONTAINER_TYPE} mode)"
 pm2-runtime start /tmp/ecosystem.config.js

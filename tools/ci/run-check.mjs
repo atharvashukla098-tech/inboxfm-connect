@@ -12,8 +12,12 @@ switch (suite) {
         execFileSync('npm', ['run', 'pack:verify', '--workspace=@inboxfm-connect/sdk'], { stdio: 'inherit' })
         break
     case 'unit':
-        turbo('test', '--concurrency=2', '--filter=@inboxfm-connect/shared', '--filter=@inboxfm-connect/core-execution', '--filter=@inboxfm-connect/core-utils', '--filter=@inboxfm-connect/sdk', '--filter=@inboxfm-connect/web', '--filter=@inboxfm-connect/scheduler', '--filter=@inboxfm-connect/pieces-common', '--filter=@inboxfm-connect/piece-bexio')
+        turbo('test', '--concurrency=2', '--filter=@inboxfm-connect/shared', '--filter=@inboxfm-connect/core-execution', '--filter=@inboxfm-connect/core-utils', '--filter=@inboxfm-connect/sdk', '--filter=@inboxfm-connect/web', '--filter=@inboxfm-connect/scheduler', '--filter=@inboxfm-connect/pieces-common', '--filter=@inboxfm-connect/piece-bexio', '--filter=@inboxfm-connect/cli')
         turbo('test-unit', '--filter=api', '--filter=@inboxfm-connect/engine')
+        // Enforces the per-package coverage ratchets declared in each vitest.config.ts. Separate
+        // from the run above so a normal test run stays fast and only CI pays for instrumentation;
+        // a coverage drop fails this suite rather than being noticed in an uploaded artifact.
+        turbo('test-coverage', '--filter=@inboxfm-connect/shared', '--filter=@inboxfm-connect/core-execution', '--filter=@inboxfm-connect/core-utils')
         break
     case 'engine-integration':
         execFileSync(process.execPath, ['-e', "require('isolated-vm')"], { cwd: 'packages/server/engine', stdio: 'inherit' })

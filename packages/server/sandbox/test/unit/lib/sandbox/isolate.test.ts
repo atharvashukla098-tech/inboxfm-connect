@@ -69,7 +69,7 @@ async function callCreate({
         command: [],
         mounts,
         env,
-        resourceLimits: { memoryLimitMb: 256, cpuMsPerSec: 1000, timeLimitSeconds: 60 },
+        resourceLimits: { memoryLimitMb: 256, timeLimitSeconds: 60 },
     })
 }
 
@@ -224,7 +224,7 @@ describe('isolateProcess', () => {
                 command: [],
                 mounts: [],
                 env: BASE_ENV,
-                resourceLimits: { memoryLimitMb: 4096, cpuMsPerSec: 1000, timeLimitSeconds: 60 },
+                resourceLimits: { memoryLimitMb: 4096, timeLimitSeconds: 60 },
             })
             const args: string[] = spawnMock.mock.calls[0][1]
             expect(args).toContain('--mem=4096')

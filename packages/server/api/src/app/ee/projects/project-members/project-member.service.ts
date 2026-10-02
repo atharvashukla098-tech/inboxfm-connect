@@ -36,6 +36,17 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             platformId,
         })
 
+        if (!isNil(existingProjectMember)) {
+            await repo().update(
+                { id: existingProjectMember.id },
+                {
+                    projectRoleId: projectRole.id,
+                    updated: dayjs().toISOString(),
+                },
+            )
+            return repo().findOneOrFail({ where: { id: existingProjectMember.id } })
+        }
+
         const projectMember: NewProjectMember = {
             id: projectMemberId,
             updated: dayjs().toISOString(),
@@ -45,11 +56,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             projectRoleId: projectRole.id,
         }
 
-        await repo().upsert(projectMember, [
-            'projectId',
-            'userId',
-            'platformId',
-        ])
+        await repo().insert(projectMember)
 
         return repo().findOneOrFail({
             where: {

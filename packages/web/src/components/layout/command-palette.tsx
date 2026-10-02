@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react'
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   CommandDialog,
@@ -21,6 +22,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
+import { CommandPaletteResources } from './command-palette-resources'
 
 export interface CommandPaletteProps {
   open: boolean
@@ -29,6 +31,9 @@ export interface CommandPaletteProps {
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
+  // Lifted so the resource search can filter on the same term the dialog filters navigation on.
+  const [search, setSearch] = React.useState('')
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -41,6 +46,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     return () => document.removeEventListener('keydown', down)
   }, [open, onOpenChange])
 
+  // Reopening with the previous term still applied would look like the palette was already
+  // filtering, so start every session clean.
+  React.useEffect(() => {
+    if (!open) setSearch('')
+  }, [open])
+
   const runCommand = React.useCallback(
     (command: () => unknown) => {
       onOpenChange(false)
@@ -49,12 +60,24 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     [onOpenChange]
   )
 
+  const goToResource = React.useCallback(
+    (to: string) => {
+      runCommand(() => navigate(to))
+    },
+    [navigate, runCommand]
+  )
+
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Type a command or search destination..." />
+      <CommandInput
+        value={search}
+        onValueChange={setSearch}
+        placeholder={t('Search resources or jump to a destination...')}
+      />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Navigation">
+        <CommandEmpty>{t('No results found.')}</CommandEmpty>
+        {open ? <CommandPaletteResources search={search} onNavigate={goToResource} /> : null}
+        <CommandGroup heading={t('Navigation')}>
           <CommandItem
             onSelect={() => runCommand(() => navigate('/'))}
             className="cursor-pointer"
@@ -115,7 +138,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
         <CommandSeparator />
 
-        <CommandGroup heading="Monitoring & Platform">
+        <CommandGroup heading={t('Monitoring & Platform')}>
           <CommandItem
             onSelect={() => runCommand(() => navigate('/activity'))}
             className="cursor-pointer"

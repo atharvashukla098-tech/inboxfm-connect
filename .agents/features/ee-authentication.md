@@ -17,17 +17,10 @@ The Enterprise Authentication module extends the Community Edition auth layer wi
 - `packages/core/shared/src/lib/ee/authn/enterprise-local-authn/requests.ts` — verify email / reset password DTOs
 - `packages/core/shared/src/lib/ee/otp/otp-model.ts` — OTP entity Zod schema and state enum
 - `packages/core/shared/src/lib/ee/otp/otp-type.ts` — `OtpType` enum (`EMAIL_VERIFICATION`, `PASSWORD_RESET`)
-- `packages/web/src/features/authentication/components/sign-in-form.tsx` — sign-in form (includes federated login buttons)
-- `packages/web/src/features/authentication/components/third-party-logins.tsx` — Google/GitHub login buttons
-- `packages/web/src/features/authentication/components/verify-email.tsx` — OTP email verification UI
-- `packages/web/src/features/authentication/components/reset-password-form.tsx` — OTP-based password reset form
-- `packages/web/src/features/authentication/hooks/auth-hooks.ts` — auth TanStack Query/mutation hooks
-- `packages/web/src/features/authentication/api/managed-auth-api.ts` — managed auth API client
-- `packages/web/src/app/routes/platform/security/sso/index.tsx` — SSO settings page (SAML + Google config)
-- `packages/web/src/app/routes/platform/security/sso/saml-dialog.tsx` — SAML configuration dialog
-- `packages/web/src/app/routes/platform/security/sso/oauth2-dialog.tsx` — Google/GitHub OAuth app dialog
-- `packages/web/src/app/routes/platform/security/sso/allowed-domain.tsx` — allowed email domain dialog
-- `packages/web/src/app/routes/authenticate/index.tsx` — SAML ACS callback landing page
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: OTP flows (email verification, password reset) and RBAC base types are available in CE. SSO, managed auth, and federated OAuth are EE/Cloud only.

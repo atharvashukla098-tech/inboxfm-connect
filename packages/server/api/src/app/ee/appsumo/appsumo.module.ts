@@ -1,3 +1,4 @@
+import { ActivepiecesError, ErrorCode, isNil } from '@inboxfm-connect/core-utils'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -11,9 +12,20 @@ export const appSumoModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
 }
 
-const exchangeCredentialUsername = system.get(AppSystemProp.APPSUMO_TOKEN)
-const exchangeCredentialPassword = system.get(AppSystemProp.APPSUMO_TOKEN)
-const token = system.get(AppSystemProp.APPSUMO_TOKEN)
+function getAppsumoToken(): string {
+    const token = system.get(AppSystemProp.APPSUMO_TOKEN)
+    if (isNil(token)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+            params: { prop: 'APPSUMO_TOKEN' },
+        })
+    }
+    return token
+}
+
+const token = getAppsumoToken()
+const exchangeCredentialUsername = token
+const exchangeCredentialPassword = token
 
 const ActionRequest = z.object({
     action: z.string(),

@@ -9,14 +9,10 @@ Event Destinations streams platform and project activity events to webhook URLs 
 - `packages/core/shared/src/lib/ee/event-destinations/index.ts` — barrel export
 - `packages/core/shared/src/lib/ee/audit-events/` — `ApplicationEventName` enum (27 event types)
 - `packages/core/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` shared helper that returns a typed `ApplicationEvent` mock for any event name
-- `packages/web/src/app/routes/platform/infra/event-destinations/index.tsx` — `EventDestinationsPage`
-- `packages/web/src/app/routes/platform/infra/event-destinations/lib/event-destinations-collection.ts` — TanStack DB live collection + mutations (incl. `useImportHandlerFlow`)
-- `packages/web/src/app/routes/platform/infra/event-destinations/lib/handler-flow-builder.ts` — generates a `Template` for a one-click webhook-triggered handler flow with per-event router branches
-- `packages/web/src/app/routes/platform/infra/event-destinations/lib/parse-flow-id-from-url.ts` — extracts an internal flow ID from a webhook URL
-- `packages/web/src/app/routes/platform/infra/event-destinations/lib/use-event-labels.ts` — human-readable labels for every `ApplicationEventName`
-- `packages/web/src/app/routes/platform/infra/event-destinations/components/event-destination-dialog.tsx` — create/edit dialog with Generate handler flow button and per-event Test webhook dropdown
-- `packages/web/src/app/routes/platform/infra/event-destinations/components/event-destination-row.tsx` — per-destination row
-- `packages/web/src/app/routes/platform/infra/event-destinations/components/event-destination-actions.tsx` — per-row edit/delete/test actions
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Not available.

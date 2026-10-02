@@ -6,15 +6,10 @@ The AI Providers module lets platform admins configure one or more LLM backends 
 ## Key Files
 - `packages/server/api/src/app/ai/` — backend module (controller, service, entity)
 - `packages/core/shared/src/lib/management/ai-providers/index.ts` — all shared Zod schemas, enums, and request/response types
-- `packages/web/src/features/platform-admin/api/ai-provider-api.ts` — frontend API client
-- `packages/web/src/features/platform-admin/hooks/ai-provider-hooks.ts` — TanStack Query hooks
-- `packages/web/src/app/routes/platform/setup/ai/index.tsx` — platform admin AI setup page
-- `packages/web/src/app/routes/platform/setup/ai/universal-pieces/ai-provider-card.tsx` — per-provider card component
-- `packages/web/src/app/routes/platform/setup/ai/universal-pieces/upsert-provider-dialog.tsx` — create/edit provider dialog
-- `packages/web/src/app/routes/platform/setup/ai/universal-pieces/upsert-provider-config-form.tsx` — provider config form
-- `packages/web/src/app/routes/platform/setup/ai/universal-pieces/model-form-popover.tsx` — model selection popover
-- `packages/web/src/features/agents/ai-model/index.tsx` — AI model selector used in agent step settings
-- `packages/web/src/features/agents/ai-model/hooks.ts` — hooks for listing available models per provider
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Not available — the module is only registered for EE and Cloud editions in `app.ts`.
@@ -97,7 +92,6 @@ A sibling feature under `packages/server/api/src/app/ai/`, distinct from AI Prov
 - `packages/server/api/src/app/ai/ai-tool-config-service.ts` — list/upsert/update/delete/getEnabledTools (auth encrypted at rest, ownership checked before update/delete)
 - `packages/server/api/src/app/ai/ai-tool-config.module.ts` — module registration (EE/Cloud only)
 - `packages/core/shared/src/lib/management/ai-tools/index.ts` — shared Zod schemas/enums
-- `packages/web/src/features/platform-admin/api/ai-tool-config-api.ts` + `hooks/ai-tool-config-hooks.ts` — frontend client + TanStack Query hooks
 - `packages/web/src/app/routes/platform/setup/ai-capabilities/` — admin page, capability dialog, provider catalog
 
 ### Endpoints (platform-admin only, EE/Cloud)

@@ -1,14 +1,18 @@
-import path from 'path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-  },
-  resolve: {
-    alias: {
-      '@inboxfm-connect/core-utils': path.resolve(__dirname, '../utils/src/index.ts'),
+    // Regression ratchet, set just below the measured 49.78% so a drop fails and an improvement
+    // does not. Enforced by the test-coverage script and the CI unit job.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      thresholds: {
+        statements: 48,
+        lines: 48,
+      },
     },
   },
 })

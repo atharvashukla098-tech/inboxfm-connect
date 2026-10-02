@@ -124,9 +124,9 @@ const initSmtpClient = (): Transporter => {
     })
 }
 
-const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
+export const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
-        'invitation-email': `You have been invited to "${vars.projectName}" project ✉️`,
+        'invitation-email': `You have been invited to the "${vars.projectName}" project ✉️`,
         'project-member-added': `Welcome to ${vars.projectName} 🎉`,
         'verify-email': 'Verify your email address ✅',
         'reset-password': 'Reset your password 🔑',

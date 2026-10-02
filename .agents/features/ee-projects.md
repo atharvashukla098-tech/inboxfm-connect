@@ -11,19 +11,11 @@ The EE Projects module adds team collaboration, role-based access control (RBAC)
 - `packages/server/api/src/app/ee/git-sync/` — SSH repo push/pull
 - `packages/core/shared/src/lib/ee/project-members/project-member.ts` — `ProjectMember` type
 - `packages/core/shared/src/lib/ee/project-members/project-member-request.ts` — list/update request DTOs
-- `packages/core/shared/src/lib/automation/project-release/project-release.ts` — `ProjectRelease` type
-- `packages/core/shared/src/lib/automation/project-release/project-release.request.ts` — release request DTOs
-- `packages/core/shared/src/lib/automation/project-release/project-state.ts` — `ProjectSyncPlan`
-- `packages/web/src/features/members/api/project-members-api.ts` — `projectMembersApi`
-- `packages/web/src/features/members/hooks/project-members-hooks.ts` — `projectMembersHooks`
-- `packages/web/src/features/members/hooks/user-invitations-hooks.ts` — `userInvitationsHooks`
 - `packages/web/src/features/members/components/` — `InviteUserDialog`, `EditRoleDialog`, `ProjectMemberCard`, `InvitationCard`
-- `packages/web/src/features/project-releases/api/project-release-api.ts` — `projectReleaseApi`
-- `packages/web/src/features/project-releases/api/git-sync-api.ts` — `gitSyncApi`
-- `packages/web/src/features/project-releases/hooks/project-release-hooks.ts` — `projectReleaseQueries`
-- `packages/web/src/features/project-releases/hooks/git-sync-hooks.ts` — `gitSyncHooks`
-- `packages/web/src/app/components/project-settings/members/index.tsx` — `MembersSettings` component
-- `packages/web/src/app/routes/project-release/index.tsx` — `ProjectReleasesPage`
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Single-user projects only. No project members, no roles, no releases, no git sync.

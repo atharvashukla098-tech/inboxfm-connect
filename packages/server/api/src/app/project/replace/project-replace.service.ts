@@ -417,10 +417,20 @@ function computePlanSignature(plan: Omit<ProjectReplacePlan, 'signature'>): stri
         destinationStateHash: plan.destinationStateHash,
         preflight: plan.preflight,
         connectionMappings: (plan.connectionMappings ?? []).map(sanitizeMappingForPlan),
+        providerMappings: (plan.providerMappings ?? []).map(sanitizeProviderMappingForPlan),
         changes: plan.changes,
         summary: plan.summary,
     })
     return crypto.createHmac('sha256', secret).update(canonicalPayload).digest('hex')
+}
+
+/**
+ * Provider mappings carry no credentials, so unlike connection mappings there is nothing to strip —
+ * they are signed verbatim. The helper exists so the two mapping kinds are normalized the same way
+ * at signing and at verification.
+ */
+function sanitizeProviderMappingForPlan(mapping: ProviderMappingSchema): ProviderMappingSchema {
+    return { sourceProvider: mapping.sourceProvider, destProvider: mapping.destProvider }
 }
 
 export const projectReplaceService = (log: FastifyBaseLogger) => ({
@@ -1587,6 +1597,7 @@ export const projectReplaceService = (log: FastifyBaseLogger) => ({
                 connections: connectionsReport,
             },
             connectionMappings: (connectionMappings ?? []).map(sanitizeMappingForPlan),
+            providerMappings: (providerMappings ?? []).map(sanitizeProviderMappingForPlan),
             changes: {
                 creates,
                 updates,
@@ -1650,6 +1661,7 @@ export const projectReplaceService = (log: FastifyBaseLogger) => ({
             destinationStateHash: plan.destinationStateHash,
             preflight: plan.preflight,
             connectionMappings: plan.connectionMappings,
+            providerMappings: plan.providerMappings,
             changes: plan.changes,
             summary: plan.summary,
         }
@@ -1669,6 +1681,18 @@ export const projectReplaceService = (log: FastifyBaseLogger) => ({
 
         if (canonicalJson(sanitizedPlanMappings) !== canonicalJson(sanitizedReqMappings)) {
             const err = new Error('Connection mappings supplied at apply time do not match the signed plan. Mapping substitution or tampering detected.') as Error & { statusCode: number }
+            err.statusCode = StatusCodes.BAD_REQUEST
+            throw err
+        }
+
+        // 3.6 Assert provider mappings binding to the signed plan. They choose the provider each
+        // mirrored agent is created against, so a plan signed for one provider set must not be
+        // applied against another. Sorted by source so ordering alone cannot trip the comparison.
+        const sanitizedPlanProviders = (plan.providerMappings ?? []).map(sanitizeProviderMappingForPlan).sort((a, b) => a.sourceProvider.localeCompare(b.sourceProvider))
+        const sanitizedReqProviders = (request.providerMappings ?? []).map(sanitizeProviderMappingForPlan).sort((a, b) => a.sourceProvider.localeCompare(b.sourceProvider))
+
+        if (canonicalJson(sanitizedPlanProviders) !== canonicalJson(sanitizedReqProviders)) {
+            const err = new Error('Provider mappings supplied at apply time do not match the signed plan. Provider substitution or tampering detected.') as Error & { statusCode: number }
             err.statusCode = StatusCodes.BAD_REQUEST
             throw err
         }
@@ -2173,10 +2197,11 @@ export const projectReplaceService = (log: FastifyBaseLogger) => ({
 
                 // Phase 1.5: Agents CREATE / UPDATE (Dependencies: Tables, Connections, and Custom Pieces exist; Dependents: Trigger Bindings, Tasks)
                 const providerMap = new Map<string, string>()
-                if (request.providerMappings) {
-                    for (const pm of request.providerMappings) {
-                        providerMap.set(pm.sourceProvider.toLowerCase(), pm.destProvider)
-                    }
+                // Read from the signed plan rather than the request: the binding assertion above has
+                // already proved the two agree, and taking the signed copy means the providers that
+                // are actually applied are by construction the ones that were reviewed.
+                for (const pm of plan.providerMappings ?? []) {
+                    providerMap.set(pm.sourceProvider.toLowerCase(), pm.destProvider)
                 }
 
                 const effectiveAgents: AgentSnapshotSchema[] = [...(snapshot.agents ?? [])]

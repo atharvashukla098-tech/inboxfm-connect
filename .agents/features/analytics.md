@@ -6,12 +6,10 @@ The Analytics module provides platform-level reporting on automation usage: dail
 ## Key Files
 - `packages/server/api/src/app/analytics/` — backend module (controller, two services, entity)
 - `packages/core/shared/src/lib/management/analytics/index.ts` — all shared Zod schemas and enums (`AnalyticsTimePeriod`, `PlatformAnalyticsReport`, `AnalyticsReportRequest`, etc.)
-- `packages/web/src/features/platform-admin/api/analytics-api.ts` — frontend API client
-- `packages/web/src/features/platform-admin/hooks/analytics-hooks.ts` — TanStack Query hooks (`platformAnalyticsHooks`)
-- `packages/web/src/app/routes/impact/index.tsx` — Impact page root
-- `packages/web/src/app/routes/impact/summary/index.tsx` — summary metrics (active flows, users, runs, time saved)
-- `packages/web/src/app/routes/impact/trends/index.tsx` — time-series area charts
-- `packages/web/src/app/routes/impact/details/index.tsx` — per-flow drill-down with editable time-saved
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Not available — gated behind `analyticsEnabled` plan flag.

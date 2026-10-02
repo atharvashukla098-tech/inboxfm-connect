@@ -7,9 +7,14 @@ export type SandboxMount = {
     optional?: boolean
 }
 
+// Only `memoryLimitMb` is applied by the process makers (`isolate.ts` passes it as both `--mem` and
+// `--max-old-space-size`; `fork.ts` as `--max-old-space-size`). There is deliberately no CPU quota:
+// neither backend exposes a per-process CPU-budget flag, so one was never wired up — a
+// `cpuMsPerSec` field here would only promise a cap that no code applies. Wall-clock is bounded
+// separately, per execution, by the `setTimeout` in `sandbox.ts#execute` from the engine's own
+// `timeoutInSeconds`, not by a process flag (see the `--time` note in `isolate.ts`).
 export type SandboxResourceLimits = {
     memoryLimitMb: number
-    cpuMsPerSec: number
     timeLimitSeconds: number
 }
 
@@ -48,7 +53,6 @@ export type SandboxStartOptions = {
 export type SandboxInitOptions = {
     env: Record<string, string>
     memoryLimitMb: number
-    cpuMsPerSec: number
     timeLimitSeconds: number
     reusable: boolean
     maxHttpBufferSizeBytes: number

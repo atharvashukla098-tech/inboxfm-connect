@@ -1,7 +1,8 @@
 apiVersion: v2
 name: activepieces
-description: A Helm chart for Activepieces
-icon: https://cdn.activepieces.com/brand/logo.svg
+description: A Helm chart for Inboxfm Connect
+# The upstream icon was removed rather than repointed: this fork publishes no logo, and leaving
+# cdn.activepieces.com here would brand the fork as Activepieces in `helm search` and Artifact Hub.
 
 # A chart can be either an 'application' or a 'library' chart.
 #

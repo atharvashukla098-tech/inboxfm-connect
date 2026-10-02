@@ -25,4 +25,4 @@ volumes:
   redis_data_dev:
 
 networks:
-  activepieces_dev:
+  inboxfm_dev:

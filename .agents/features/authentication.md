@@ -15,11 +15,10 @@ The authentication feature handles user identity creation, sign-in, and JWT sess
 - `packages/server/api/src/app/authentication/user-identity/user-identity-entity.ts` — `user_identity` table entity
 - `packages/server/api/src/app/authentication/user-identity/user-identity-service.ts` — identity CRUD, password verification, `verify()`, `getIdentityByEmail()`
 - `packages/core/shared/src/lib/core/authentication/dto/authentication-response.ts` — `AuthenticationResponse` Zod schema
-- `packages/web/src/features/authentication/hooks/auth-hooks.ts` — React Query mutations: `useSignIn`, `useSignUp`, `useSendOtpEmail`, `useResetPassword`, `useVerifyEmail`
-- `packages/web/src/features/authentication/components/sign-in-form.tsx` — sign-in form component
-- `packages/web/src/features/authentication/components/sign-up-form.tsx` — sign-up form component
-- `packages/web/src/features/authentication/components/third-party-logins.tsx` — OAuth provider buttons
-- `packages/web/src/app/routes/auth-routes.tsx` — route declarations: /sign-in, /sign-up, /forget-password, /reset-password, /verify-email, /invitation
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 All editions (Community, Enterprise, Cloud). Email auth checks and domain-allow-listing guards are skipped on Community edition. OTP email verification is sent on Cloud (production); on Community, Enterprise, and Cloud in development (`AP_ENVIRONMENT=development`) the identity is automatically marked verified.

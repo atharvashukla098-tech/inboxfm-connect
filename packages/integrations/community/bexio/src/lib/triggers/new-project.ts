@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@inboxfm-connect/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@inboxfm-connect/pieces-common';
 import { bexioAuth } from '../auth';
+import { fetchBexioListOrLog } from '../common';
 import { BexioClient } from '../common/client';
 import { OAuth2PropertyValue } from '@inboxfm-connect/pieces-framework';
 
@@ -86,7 +87,11 @@ export const newProjectTrigger = createTrigger({
 
         try {
           const client = new BexioClient(auth);
-          const statuses = await client.get<Array<{ id: number; name: string }>>('/2.0/pr_project_state').catch(() => []);
+          const statuses = await fetchBexioListOrLog<{ id: number; name: string }>({
+            client,
+            endpoint: '/2.0/pr_project_state',
+            label: 'statuses',
+          });
 
           if (statuses.length === 0) {
             return {

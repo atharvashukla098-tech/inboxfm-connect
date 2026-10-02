@@ -9,9 +9,11 @@ Audit Logging records security-relevant actions taken within a platform for comp
 - `packages/server/api/src/app/ee/audit-logs/audit-event-entity.ts` — TypeORM entity
 - `packages/core/shared/src/lib/ee/audit-events/index.ts` — all event types, `ApplicationEvent` union, `ApplicationEventName` enum, `summarizeApplicationEvent()` helper
 - `packages/core/shared/src/lib/ee/audit-events/mock-event-builder.ts` — `buildMockEvent()` returns a typed `ApplicationEvent` mock for every `ApplicationEventName` value (used by event destination test delivery)
-- `packages/web/src/features/platform-admin/api/audit-events-api.ts` — frontend API client
-- `packages/web/src/features/platform-admin/hooks/audit-log-hooks.ts` — React query hooks
 - `packages/web/src/app/routes/platform/security/audit-logs/` — platform admin UI page
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 Enterprise and Cloud. Gated by `platform.plan.auditLogEnabled`.

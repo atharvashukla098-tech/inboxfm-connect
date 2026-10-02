@@ -9,17 +9,10 @@ Manages user identity, platform membership, roles, and session security. A `User
 - `packages/server/api/src/app/user/platform/platform-user-controller.ts` — platform admin user management endpoints (EE)
 - `packages/server/api/src/app/user/platform/platform-user-module.ts` — platform user module
 - `packages/core/shared/src/lib/core/user/user.ts` — User, UserWithMetaInformation schemas; PlatformRole and UserStatus enums
-- `packages/web/src/app/routes/platform/users/index.tsx` — platform admin user list page
-- `packages/web/src/app/routes/platform/users/columns.tsx` — user table column definitions
-- `packages/web/src/app/routes/platform/users/actions/user-actions.tsx` — action menu for a user row
-- `packages/web/src/app/routes/platform/users/actions/update-user-dialog.tsx` — edit role/status dialog
-- `packages/web/src/app/routes/platform/users/actions/edit-user-action.tsx` — edit action trigger
-- `packages/web/src/app/routes/platform/users/actions/toggle-user-status-action.tsx` — activate/deactivate action
-- `packages/web/src/app/routes/platform/users/actions/delete-user-action.tsx` — delete user action
-- `packages/web/src/features/authentication/components/sign-in-form.tsx` — sign-in form
-- `packages/web/src/features/authentication/components/sign-up-form.tsx` — sign-up form
-- `packages/web/src/features/authentication/components/change-password.tsx` — password change form
-- `packages/web/src/features/authentication/hooks/auth-hooks.ts` — auth React Query hooks
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - Community (CE): User, UserIdentity, session management, `GET /v1/users/me`, `POST /v1/users/me`

@@ -6,17 +6,15 @@
 Ingests inbound HTTP requests from external services and routes them to flows for execution. The module normalizes request payloads (handling multipart, binary, JSON, and text), supports both synchronous (blocking, waits for flow response) and asynchronous (fire-and-forget) execution modes, manages handshake verification for external services that challenge webhook ownership, and enforces payload size limits. It is the primary entry point for event-driven flow execution from outside Activepieces.
 
 ## Key Files
-- `packages/server/api/src/app/webhooks/webhook.service.ts` — core routing, sync/async execution, flow resolution
-- `packages/server/api/src/app/webhooks/webhook-controller.ts` — 5 route registrations (sync, async, draft sync, draft async, test)
-- `packages/server/api/src/app/webhooks/webhook-request-converter.ts` — payload normalization and file upload
-- `packages/server/api/src/app/webhooks/webhook-handshake.ts` — handshake verification logic
-- `packages/server/api/src/app/webhooks/webhook-module.ts` — module registration
+- `packages/server/api/src/app/ee/platform-webhooks/platform-webhooks.controller.ts` — core routing, sync/async execution, flow resolution
+- `packages/server/api/src/app/ee/platform-webhooks/platform-webhooks.controller.ts` — 5 route registrations (sync, async, draft sync, draft async, test)
+- `packages/server/api/src/app/ee/platform-webhooks/platform-webhooks.module.ts` — module registration
 - `packages/core/shared/src/lib/automation/webhook/dto.ts` — WebhookUrlParams schema
 - `packages/core/shared/src/lib/automation/trigger/index.ts` — WebhookHandshakeStrategy enum and WebhookHandshakeConfiguration schema
-- `packages/web/src/app/builder/test-step/custom-test-step/test-webhook-dialog.tsx` — dialog for sending a manual test request to the webhook URL
-- `packages/web/src/app/builder/test-step/test-trigger-section/manual-webhook-test-button.tsx` — button that opens the test webhook dialog
-- `packages/web/src/app/builder/test-step/test-trigger-section/index.tsx` — test trigger panel (includes webhook test entry point)
-- `packages/components/icons/webhook.tsx` — webhook icon used across the UI
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - Community (CE): all webhook functionality

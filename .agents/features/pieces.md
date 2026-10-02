@@ -12,11 +12,12 @@ The pieces feature manages the metadata catalog of automation integrations (call
 - `packages/server/api/src/app/pieces/piece-install-service.ts` — saves archive, calls engine to extract metadata, stores result
 - `packages/server/api/src/app/pieces/piece-sync-service.ts` — syncs canonical piece registry from NPM/bundled artifacts into DB
 - `packages/server/api/src/app/pieces/tags/` — tag entity, tag service, tag-module for organizing pieces into groups
-- `packages/web/src/features/pieces/api/pieces-api.ts` — frontend HTTP client
-- `packages/web/src/features/pieces/hooks/pieces-hooks.ts` — React Query hooks for piece listing, piece model, piece options
-- `packages/web/src/features/pieces/hooks/use-piece-output-schema.ts` — reads `outputSchema` for a given step (PIECE action or trigger) off the cached piece model; shares the existing `['piece', name, version]` React Query cache so no extra network call is made
 - `packages/web/src/features/pieces/components/` — `PieceIcon`, `PieceIconList`, `PieceSelectorSearch`, `InstallPieceDialog`
 - `packages/integrations/framework/src/lib/output-schema.ts` — `OutputSchema` / `OutputSchemaField` / `FieldFormat` plain TypeScript types (embedded into the piece metadata via `z.custom`)
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 All editions. Piece filtering by allowed/blocked list and EE-specific filtering are gated in `enterpriseFilteringUtils` but the base listing and installation is Community-level.

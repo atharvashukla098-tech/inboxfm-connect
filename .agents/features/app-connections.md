@@ -9,23 +9,14 @@ App Connections store encrypted authentication credentials (OAuth2 tokens, API k
 - `packages/core/shared/src/lib/automation/app-connection/dto/upsert-app-connection-request.ts` — upsert DTO
 - `packages/core/shared/src/lib/automation/app-connection/dto/read-app-connection-request.ts` — list query DTO
 - `packages/core/shared/src/lib/automation/app-connection/oauth2-authorization-method.ts` — OAuth2 authorization method enum
-- `packages/web/src/features/connections/api/app-connections.ts` — frontend API client
-- `packages/web/src/features/connections/api/global-connections.ts` — global (platform-scope) connections API client
-- `packages/web/src/features/connections/hooks/app-connections-hooks.ts` — TanStack Query hooks (`appConnectionsQueries`, `appConnectionsMutations`)
-- `packages/web/src/features/connections/hooks/global-connections-hooks.ts` — global connections hooks
-- `packages/web/src/features/connections/utils/oauth2-utils.ts` — OAuth2 redirect URL helpers
-- `packages/web/src/features/connections/utils/utils.ts` — name-uniqueness check helpers
-- `packages/web/src/app/routes/connections/index.tsx` — project connections list page
-- `packages/web/src/app/routes/platform/setup/connections/index.tsx` — platform-wide global connections page
-- `packages/web/src/app/connections/new-connection-dialog.tsx` — new connection dialog wrapper
-- `packages/web/src/app/connections/create-edit-connection-dialog.tsx` — create/edit connection form dialog
-- `packages/web/src/features/connections/components/edit-global-connection-dialog.tsx` — edit global connection dialog
-- `packages/web/src/features/connections/components/rename-connection-dialog.tsx` — rename connection dialog
-- `packages/web/src/app/connections/oidc-connection-settings.tsx` — OIDC connection form component
 - `packages/server/api/src/app/core/security/oidc/oidc-key-manager.ts` — RSA key lifecycle: mutex-protected caching, auto-generation persisted (encrypted) to the shared `flag` table, RFC 7638 kid fingerprint
 - `packages/server/api/src/app/core/security/oidc/oidc.module.ts` — module wrapper that registers the OIDC token controller under `/v1/worker`
 - `packages/server/api/src/app/core/security/oidc/oidc-token.controller.ts` — engine-only endpoint that issues RS256 JWTs (`POST /api/v1/worker/oidc-token`)
 - `packages/server/api/src/app/core/security/oidc/oidc-discovery.controller.ts` — public OIDC discovery endpoints (`GET /.well-known/openid-configuration`, `GET /.well-known/jwks.json`)
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Available — project-scoped connections fully supported.

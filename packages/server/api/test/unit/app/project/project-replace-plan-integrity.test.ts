@@ -7,6 +7,7 @@ const {
     canonicalJson,
     computePlanSignature,
     sanitizeMappingForPlan,
+    getSigningSecret,
 } = projectReplaceTesting
 
 describe('project-replace plan signing & integrity (Issue #126)', () => {
@@ -155,6 +156,136 @@ describe('project-replace plan signing & integrity (Issue #126)', () => {
             tamperedChecksum.checksum = 'sha256:corrupted'
             const checksumSig = computePlanSignature(tamperedChecksum)
             expect(checksumSig).not.toBe(originalSig)
+        })
+
+        it('binds provider mappings, so a plan cannot be re-pointed at another provider', () => {
+            // Provider mappings decide which AI provider each mirrored agent is created against.
+            // While they sat outside the canonical payload, a legitimately signed plan could be
+            // applied with different providers than the reviewer approved.
+            const withProviders = createSamplePlan()
+            withProviders.providerMappings = [
+                { sourceProvider: 'openai', destProvider: 'azure-openai' },
+            ]
+            const signed = computePlanSignature(withProviders)
+
+            const swapped = createSamplePlan()
+            swapped.providerMappings = [
+                { sourceProvider: 'openai', destProvider: 'attacker-endpoint' },
+            ]
+            const swappedSig = computePlanSignature(swapped)
+
+            expect(swappedSig).not.toBe(signed)
+            expect(crypto.timingSafeEqual(Buffer.from(signed, 'hex'), Buffer.from(swappedSig, 'hex'))).toBe(false)
+        })
+
+        it('binds the empty provider-mapping set too, so adding one always changes the signature', () => {
+            const withoutProviders = createSamplePlan()
+            const baseSig = computePlanSignature(withoutProviders)
+
+            const withEmptyArray = createSamplePlan()
+            withEmptyArray.providerMappings = []
+            const emptySig = computePlanSignature(withEmptyArray)
+
+            const withOne = createSamplePlan()
+            withOne.providerMappings = [{ sourceProvider: 'openai', destProvider: 'openai' }]
+            const oneSig = computePlanSignature(withOne)
+
+            // An absent set and an explicitly empty set are the same claim, so they must agree...
+            expect(emptySig).toBe(baseSig)
+            // ...but any real mapping must not.
+            expect(oneSig).not.toBe(baseSig)
+        })
+    })
+
+    describe('fail-closed signing secret (Issue #126)', () => {
+        /**
+         * `getSigningSecret` reads the dedicated prop, then the two env vars, then JWT_SECRET. The
+         * suite runs with AP_JWT_SECRET set, so the unconfigured case has to be simulated by
+         * clearing all three, and everything restored afterwards so the other suites in this file
+         * still sign normally.
+         */
+        function withNoSigningSecret<T>(fn: () => T): T {
+            const envKeys = [
+                'PROJECT_REPLACE_SIGNING_SECRET',
+                'AP_PROJECT_REPLACE_SIGNING_SECRET',
+                'AP_JWT_SECRET',
+                'JWT_SECRET',
+            ] as const
+            const saved = envKeys.map(key => process.env[key])
+            for (const key of envKeys) Reflect.deleteProperty(process.env, key)
+            try {
+                return fn()
+            }
+            finally {
+                envKeys.forEach((key, index) => {
+                    const value = saved[index]
+                    if (value === undefined) Reflect.deleteProperty(process.env, key)
+                    else process.env[key] = value
+                })
+            }
+        }
+
+        it('throws rather than signing with a default when no secret is configured', () => {
+            // A silent fallback to a hardcoded or empty secret would let anyone forge plan artifacts.
+            // The throw is the security property, so it is asserted directly.
+            withNoSigningSecret(() => {
+                expect(() => getSigningSecret()).toThrow(/Signing secret is not configured/)
+            })
+        })
+
+        it('propagates the throw out of computePlanSignature rather than producing a signature', () => {
+            withNoSigningSecret(() => {
+                expect(() => computePlanSignature({
+                    planId: 'plan-001',
+                    schemaVersion: 1,
+                    toolVersion: '1.0.0',
+                    createdAt: '2026-01-01T00:00:00.000Z',
+                    sourceActivepiecesVersion: '0.86.0',
+                    targetActivepiecesVersion: '0.86.0',
+                    targetProjectId: 'proj-dest-1',
+                    checksum: 'sha256:abcd',
+                    destinationStateHash: 'hash-xyz',
+                    preflight: { passed: true, errors: [], warnings: [] },
+                    connectionMappings: [],
+                    providerMappings: [],
+                    changes: { creates: [], updates: [], deletes: [], unchanged: [] },
+                    summary: { totalCreates: 0, totalUpdates: 0, totalDeletes: 0, totalUnchanged: 0 },
+                })).toThrow(/Signing secret is not configured/)
+            })
+        })
+
+        it('names both supported configuration sources in the failure message', () => {
+            withNoSigningSecret(() => {
+                let message = ''
+                try {
+                    getSigningSecret()
+                }
+                catch (error) {
+                    message = (error as Error).message
+                }
+                expect(message).toContain('PROJECT_REPLACE_SIGNING_SECRET')
+                expect(message).toContain('JWT_SECRET')
+            })
+        })
+
+        it('still signs when a secret is present, so the throw above is not vacuous', () => {
+            expect(() => getSigningSecret()).not.toThrow()
+            expect(computePlanSignature({
+                planId: 'plan-001',
+                schemaVersion: 1,
+                toolVersion: '1.0.0',
+                createdAt: '2026-01-01T00:00:00.000Z',
+                sourceActivepiecesVersion: '0.86.0',
+                targetActivepiecesVersion: '0.86.0',
+                targetProjectId: 'proj-dest-1',
+                checksum: 'sha256:abcd',
+                destinationStateHash: 'hash-xyz',
+                preflight: { passed: true, errors: [], warnings: [] },
+                connectionMappings: [],
+                providerMappings: [],
+                changes: { creates: [], updates: [], deletes: [], unchanged: [] },
+                summary: { totalCreates: 0, totalUpdates: 0, totalDeletes: 0, totalUnchanged: 0 },
+            })).toMatch(/^[a-f0-9]{64}$/)
         })
     })
 })

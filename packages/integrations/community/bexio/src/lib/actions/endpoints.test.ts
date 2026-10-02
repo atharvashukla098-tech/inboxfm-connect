@@ -3,9 +3,11 @@ import { PropertyType } from '@inboxfm-connect/pieces-framework';
 import { HttpError } from '@inboxfm-connect/pieces-common';
 import { createTimeTrackingAction } from './create-time-tracking';
 import { createProductAction } from './create-product';
+import { createSalesOrderAction } from './create-sales-order';
 import { updateProductAction } from './update-product';
+import { newOrderTrigger } from '../triggers/new-order';
 import { BexioClient } from '../common/client';
-import { extractErrorMessage } from '../common';
+import { extractErrorMessage, fetchBexioListOrLog } from '../common';
 import { bexioAuth } from '../auth';
 
 vi.mock('../common/client', () => {
@@ -282,4 +284,139 @@ describe('Bexio Dropdown Endpoints & Error Handling', () => {
       expect((articleGroupProp as any).options).toBeUndefined();
     });
   });
+
+  describe('fetchBexioListOrLog (#185 follow-up)', () => {
+    it('returns the list untouched when the endpoint succeeds', async () => {
+      const list = [{ id: 1, name: 'Piece' }];
+      const get = vi.fn().mockResolvedValue(list);
+
+      const result = await fetchBexioListOrLog({
+        client: { get },
+        endpoint: '/2.0/unit',
+        label: 'units',
+      });
+
+      expect(result).toEqual(list);
+      expect(get).toHaveBeenCalledWith('/2.0/unit');
+    });
+
+    it('degrades to an empty list and logs the reason when the endpoint fails', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const get = vi.fn().mockRejectedValue(new Error('Network error'));
+
+      const result = await fetchBexioListOrLog({
+        client: { get },
+        endpoint: '/2.0/unit',
+        label: 'units',
+      });
+
+      expect(result).toEqual([]);
+      // An empty dropdown is indistinguishable from a legitimately empty collection, so the
+      // failure has to leave a trace or the degradation is undiagnosable.
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to load units from Bexio API (/2.0/unit): Network error'),
+        expect.anything()
+      );
+      errorSpy.mockRestore();
+    });
+  });
+
+  describe('sales position dropdowns stay independent and visible (#185 follow-up)', () => {
+    // A single try/catch wrapped around all three calls would let one failure suppress the
+    // unrelated dropdowns that did load, which is the regression this guards. The contract is
+    // asserted through the client calls and the logs rather than through the returned property
+    // tree, whose shape is owned by the framework's zod schemas.
+    it('still requests accounts and taxes after units fails, and reports only that failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const get = vi.fn().mockImplementation((endpoint: string) => {
+        if (endpoint === '/2.0/unit') {
+          return Promise.reject(new Error('Scope unit is required'));
+        }
+        if (endpoint === '/accounts') {
+          return Promise.resolve([{ id: 7, account_no: '1000', name: 'Sales' }]);
+        }
+        return Promise.resolve([
+          { id: 3, name: 'MWST', value: 8.1, display_name: 'MWST 8.1' },
+        ]);
+      });
+      mockBexioClient(get);
+
+      const result = await positionFields().props({ auth: mockAuth });
+
+      expect(Object.keys(result)).toContain('positions');
+      const requested = get.mock.calls.map((call) => call[0]);
+      expect(requested).toContain('/2.0/unit');
+      expect(requested).toContain('/accounts');
+      expect(requested).toContain('/3.0/taxes?types=sales_tax&scope=active');
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to load units from Bexio API (/2.0/unit)'),
+        expect.anything()
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('reports every endpoint separately instead of aborting on the first failure', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const get = vi.fn().mockRejectedValue(new Error('Service Unavailable'));
+      mockBexioClient(get);
+
+      const result = await positionFields().props({ auth: mockAuth });
+
+      // The position field degrades to manual numeric entry rather than throwing, so a broken
+      // connection still lets the user enter IDs by hand.
+      expect(Object.keys(result)).toContain('positions');
+      expect(get).toHaveBeenCalledTimes(3);
+      expect(errorSpy).toHaveBeenCalledTimes(3);
+      errorSpy.mockRestore();
+    });
+  });
+
+  describe('trigger status dropdowns report failures (#185 follow-up)', () => {
+    it('logs the failure and falls back to triggering for all statuses', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const get = vi.fn().mockRejectedValue(new Error('Forbidden'));
+      mockBexioClient(get);
+
+      const result = await orderStatusOptions()({ auth: mockAuth });
+
+      expect(result.disabled).toBe(false);
+      expect(result.placeholder).toBe(
+        'Status filter not available - will trigger for all statuses'
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Failed to load statuses from Bexio API (/2.0/kb_order_status): Forbidden'
+        ),
+        expect.anything()
+      );
+      errorSpy.mockRestore();
+    });
+  });
 });
+
+function mockBexioClient(get: ReturnType<typeof vi.fn>): void {
+  vi.mocked(BexioClient).mockImplementation(
+    () => ({ get }) as unknown as BexioClient
+  );
+}
+
+function positionFields(): {
+  props: (params: { auth: unknown }) => Promise<Record<string, unknown>>;
+} {
+  return createSalesOrderAction.props
+    .positionFields as unknown as ReturnType<typeof positionFields>;
+}
+
+function orderStatusOptions(): (params: {
+  auth: unknown;
+}) => Promise<{ disabled: boolean; placeholder?: string; options: unknown[] }> {
+  const statusId = newOrderTrigger.props.status_id as unknown as {
+    options: (params: { auth: unknown }) => Promise<{
+      disabled: boolean;
+      placeholder?: string;
+      options: unknown[];
+    }>;
+  };
+  return statusId.options;
+}

@@ -18,10 +18,11 @@ The cryptographic core is **Signing Keys**: RSA-4096 key pairs generated server-
 - `packages/core/shared/src/lib/ee/signing-key/signing-key-model.ts` — `SigningKey` type and `KeyAlgorithm` enum
 - `packages/core/shared/src/lib/ee/signing-key/signing-key-response.ts` — `AddSigningKeyResponse` type (includes `privateKey`)
 - `packages/core/shared/src/lib/ee/signing-key/signing-key.request.ts` — `AddSigningKeyRequestBody` schema
-- `packages/web/src/features/platform-admin/api/signing-key-api.ts` — frontend API client
-- `packages/web/src/features/platform-admin/hooks/signing-key-hooks.ts` — React query hooks
-- `packages/web/src/features/platform-admin/components/new-signing-key-dialog.tsx` — UI dialog showing the private key once on creation
 - `packages/web/src/app/routes/platform/security/embed/` — platform admin UI page (Embed Onboarding)
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 Enterprise and Cloud. Gated by `platform.plan.embeddingEnabled`. Module hook: `platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled)`.

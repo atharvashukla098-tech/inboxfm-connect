@@ -9,10 +9,11 @@ The EE Platform module manages billing, quota enforcement, AI credits, license k
 - `packages/server/api/src/app/ee/platform/platform-plan/billing-checkout.service.ts` — serializes checkout per platform, preserves the customer, and rejects managed/existing subscriptions
 - `packages/core/shared/src/lib/ee/billing/index.ts` — shared plan constants, Zod schemas, `STANDARD_CLOUD_PLAN`, `OPEN_SOURCE_PLAN`
 - `packages/core/shared/src/lib/management/platform/` — `PlatformPlan` type and all feature-flag fields
-- `packages/web/src/features/billing/api/billing-plans-api.ts` — `platformBillingApi` (portal, checkout, AI credits, auto top-up)
-- `packages/web/src/features/billing/hooks/billing-hooks.ts` — `billingQueries`, `billingMutations`
 - `packages/web/src/features/billing/components/` — `SubscriptionInfo`, `ActiveFlowAddon`, `AICreditUsage`, `LicenseKey`, `PurchaseAICreditsDialog`, `AutoTopUpConfigDialog`
-- `packages/web/src/app/routes/platform/billing/index.tsx` — Billing page (gated by edition, uses `LockedFeatureGuard`)
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: No billing UI. `OPEN_SOURCE_PLAN` applied — unlimited flows, 0 AI credits, no team projects. All feature flags off.

@@ -30,6 +30,15 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             const compression = contentEncoding === 'zstd' ? FileCompression.ZSTD : FileCompression.NONE
             const contentLength = Number(request.headers['content-length'] ?? 0)
 
+            // Reject a cross-project id before anything observable happens: the read URL below is
+            // bound to the fileId rather than to a project, so minting it first would hand a caller
+            // who is about to be refused a working download link for the row they tried to claim.
+            await fileService(request.log).assertCanSave({
+                fileId,
+                projectId: principal.projectId,
+                platformId: principal.platform.id,
+            })
+
             const readUrl = await filesService.constructReadUrl({
                 fileId,
                 fileType,

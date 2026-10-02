@@ -7,13 +7,15 @@ Agents is a flow step type (backed by `@inboxfm-connect/piece-agent`) that execu
 
 ## Key Files
 
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
+
 ### Shared Types
-- `packages/core/shared/src/lib/automation/agents/index.ts` — enums (`AgentToolType`, `AgentTaskStatus`, `ContentBlockType`, `ToolCallType`, `AgentOutputFieldType`), types (`AgentProviderModel`, `AgentResult`, `AgentStepBlock`, `AgentOutputField`), and `AgentPieceProps` property name enum
-- `packages/core/shared/src/lib/automation/agents/tools.ts` — all tool Zod schemas: `AgentPieceTool`, `AgentFlowTool`, `AgentMcpTool`, `AgentKnowledgeBaseTool`, `AgentTool` discriminated union; `McpAuthConfig`, `PredefinedInputsStructure`
+- `packages/core/execution/src/lib/agents/index.ts` — enums (`AgentToolType`, `AgentTaskStatus`, `ContentBlockType`, `ToolCallType`, `AgentOutputFieldType`), types (`AgentProviderModel`, `AgentResult`, `AgentStepBlock`, `AgentOutputField`), and `AgentPieceProps` property name enum
+- `packages/core/execution/src/lib/agents/tools.ts` — all tool Zod schemas: `AgentPieceTool`, `AgentFlowTool`, `AgentMcpTool`, `AgentKnowledgeBaseTool`, `AgentTool` discriminated union; `McpAuthConfig`, `PredefinedInputsStructure`
 
 ### Frontend
-- `packages/web/src/features/agents/index.ts` — barrel export
-- `packages/web/src/features/agents/hooks/agent-hooks.ts` — `agentQueries.useFlowsForAgent()`, `agentMutations.useValidateMcpTool()`
 - `packages/web/src/features/agents/agent-tools/` — tool management UI (add dropdown, per-tool dialogs, stores)
 - `packages/web/src/features/agents/agent-tools/stores/` — Zustand stores for piece-tools dialog (`pieces-tools.ts`) and knowledge-base tools (`knowledge-base-tools.ts`)
 - `packages/web/src/features/agents/agent-tools/piece-tool-dialog/` — multi-page dialog: piece list → action list → predefined inputs form → connection picker
@@ -22,10 +24,7 @@ Agents is a flow step type (backed by `@inboxfm-connect/piece-agent`) that execu
 - `packages/web/src/features/agents/agent-tools/knowledge-base-dialog/` — dialog to attach a knowledge-base file
 - `packages/web/src/features/agents/agent-timeline/` — `AgentTimeline` component that renders step-by-step execution blocks (markdown + tool calls) from `AgentResult.steps`
 - `packages/web/src/features/agents/ai-model/` — `AIModelSelector` component; `PROVIDER_EMBEDDING_MODELS` constant
-- `packages/web/src/features/agents/ai-providers.ts` — `SUPPORTED_AI_PROVIDERS` list with metadata per provider
 - `packages/web/src/features/agents/structured-output/` — `AgentStructuredOutput` component for defining output field schema
-- `packages/web/src/app/builder/step-settings/agent-settings/index.tsx` — builder panel for configuring an agent step
-- `packages/web/src/app/builder/test-step/agent-test-step/index.tsx` — test panel for running a single agent step and viewing results
 
 ## Edition Availability
 Gated by `platform.plan.agentsEnabled`. When disabled, the agent step type is hidden from the piece selector. All editions can run agents if the flag is enabled; by default it is off on Community, on on Cloud plans that include it.

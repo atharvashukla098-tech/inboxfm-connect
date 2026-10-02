@@ -3,10 +3,12 @@ import { FileType, PrincipalType } from '@inboxfm-connect/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { filesService } from '../../../../src/app/file/files-service'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { fileRepo } from '../../../../src/app/file/file.service'
+import { fileTransportHeaders, filesService } from '../../../../src/app/file/files-service'
 import { JwtAudience, jwtUtils } from '../../../../src/app/helper/jwt-utils'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockProject, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -336,4 +338,127 @@ describe('Files Controller', () => {
             expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
         })
     })
+
+    describe('PUT /v1/files/:fileId cross-project isolation (#443)', () => {
+        it("rejects an engine token from another project and leaves the victim's row untouched", async () => {
+            const victim = await mockAndSaveBasicSetup()
+            const attacker = await mockAndSaveBasicSetup()
+            const fileId = apId()
+
+            const victimPut = await putFile({
+                app,
+                fileId,
+                token: await engineTokenFor({ projectId: victim.mockProject.id, platformId: victim.mockPlatform.id }),
+                fileName: 'victim.txt',
+                payload: 'victim bytes',
+            })
+            expect(victimPut.statusCode).toBe(StatusCodes.OK)
+
+            const attackerPut = await putFile({
+                app,
+                fileId,
+                token: await engineTokenFor({ projectId: attacker.mockProject.id, platformId: attacker.mockPlatform.id }),
+                fileName: 'attacker.txt',
+                payload: 'attacker bytes',
+            })
+
+            expect(attackerPut.statusCode).toBe(StatusCodes.FORBIDDEN)
+            // A read URL is bound to the fileId rather than to a project, so a refused caller must
+            // not come away holding one.
+            expect(attackerPut.headers[fileTransportHeaders.READ_URL]).toBeUndefined()
+            expect(attackerPut.json().readUrl).toBeUndefined()
+
+            const row = await fileRepo().findOneBy({ id: fileId })
+            expect(row?.projectId).toBe(victim.mockProject.id)
+            expect(row?.platformId).toBe(victim.mockPlatform.id)
+            expect(row?.fileName).toBe('victim.txt')
+            expect(row?.data?.toString('utf-8')).toBe('victim bytes')
+        })
+
+        it('rejects a takeover from a different project on the same platform', async () => {
+            const setup = await mockAndSaveBasicSetup()
+            const siblingProject = createMockProject({
+                platformId: setup.mockPlatform.id,
+                ownerId: setup.mockOwner.id,
+            })
+            await databaseConnection().getRepository('project').save(siblingProject)
+            const fileId = apId()
+
+            const ownerPut = await putFile({
+                app,
+                fileId,
+                token: await engineTokenFor({ projectId: setup.mockProject.id, platformId: setup.mockPlatform.id }),
+                fileName: 'owner.txt',
+                payload: 'owner bytes',
+            })
+            expect(ownerPut.statusCode).toBe(StatusCodes.OK)
+
+            const siblingPut = await putFile({
+                app,
+                fileId,
+                token: await engineTokenFor({ projectId: siblingProject.id, platformId: setup.mockPlatform.id }),
+                fileName: 'sibling.txt',
+                payload: 'sibling bytes',
+            })
+
+            expect(siblingPut.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const row = await fileRepo().findOneBy({ id: fileId })
+            expect(row?.projectId).toBe(setup.mockProject.id)
+            expect(row?.fileName).toBe('owner.txt')
+            expect(row?.data?.toString('utf-8')).toBe('owner bytes')
+        })
+
+        it('still lets the owning project re-write its own file id', async () => {
+            const setup = await mockAndSaveBasicSetup()
+            const token = await engineTokenFor({ projectId: setup.mockProject.id, platformId: setup.mockPlatform.id })
+            const fileId = apId()
+
+            const firstPut = await putFile({ app, fileId, token, fileName: 'first.txt', payload: 'first bytes' })
+            expect(firstPut.statusCode).toBe(StatusCodes.OK)
+
+            const secondPut = await putFile({ app, fileId, token, fileName: 'second.txt', payload: 'second bytes' })
+            expect(secondPut.statusCode).toBe(StatusCodes.OK)
+
+            const row = await fileRepo().findOneBy({ id: fileId })
+            expect(row?.fileName).toBe('second.txt')
+            expect(row?.data?.toString('utf-8')).toBe('second bytes')
+            expect(row?.projectId).toBe(setup.mockProject.id)
+        })
+    })
 })
+
+async function engineTokenFor({ projectId, platformId }: EngineTokenParams): Promise<string> {
+    return generateMockToken({
+        type: PrincipalType.ENGINE,
+        id: apId(),
+        projectId,
+        platform: { id: platformId },
+    })
+}
+
+async function putFile({ app, fileId, token, fileName, payload }: PutFileParams) {
+    return app!.inject({
+        method: 'PUT',
+        url: `/api/v1/files/${fileId}`,
+        query: { token },
+        headers: {
+            'content-type': 'application/octet-stream',
+            'x-ap-file-type': FileType.FLOW_STEP_FILE,
+            'x-ap-file-name': fileName,
+        },
+        payload: Buffer.from(payload),
+    })
+}
+
+type EngineTokenParams = {
+    projectId: string
+    platformId: string
+}
+
+type PutFileParams = {
+    app: FastifyInstance | null
+    fileId: string
+    token: string
+    fileName: string
+    payload: string
+}

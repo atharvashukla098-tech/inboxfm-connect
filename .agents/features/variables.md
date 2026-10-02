@@ -1,87 +1,43 @@
 # Variables
 
+> **This doc used to describe a feature that no longer exists.** The project-scoped *Variables*
+> store — user-defined `{{variables['NAME']}}` secrets in a `variable` table, with
+> `variable.service` / `variable.controller` / `/v1/variables`, an engine-only
+> `/v1/worker/variables/:name` route, a reveal endpoint, and the `AddVariableTable` migration — was
+> **removed from this fork**. None of those files exist. If you are looking for a variables CRUD
+> API, a `variable` table, or the secret-reveal flow, it is not here; do not go looking under
+> `packages/server/api/src/app/variable/`.
+>
+> What *does* remain is the engine's variable-expression engine, documented below. Earlier
+> revisions of this file mixed the two and pointed at the removed store, which cost agents accuracy
+> (issue #346).
+
 ## Summary
-Variables are project-scoped, encrypted secret values (API keys, tokens, opaque strings) that users create once and reference inside any flow input via a mention syntax `{{variables['NAME']}}`. They live in a dedicated `variable` table — completely separate from `app_connection` — and resolve at flow execution time through a worker endpoint the engine calls. Values are encrypted at rest with `encryptUtils.encryptObject`; the plaintext is only available to USER principals via the explicit reveal endpoint (audit-logged) or to the engine during a flow run.
+
+At flow-execution time the engine resolves `{{...}}` expressions in a step's input. Tokens are
+dispatched by kind — a `variables[...]` reference, a `connections[...]` reference, a step result,
+or a piece output — and resolved against the execution context. Only the **expression/props
+resolution** half of the original feature survives; nothing is persisted.
 
 ## Key Files
-- `packages/server/api/src/app/variable/variable.entity.ts` — TypeORM entity (`variable` table, unique `(projectId, name)` index, SET NULL FK to user).
-- `packages/server/api/src/app/variable/variable.service.ts` — upsert / list / delete / reveal / decrypt-for-worker.
-- `packages/server/api/src/app/variable/variable.controller.ts` — `/v1/variables` REST routes (USER + SERVICE).
-- `packages/server/api/src/app/variable/variable-worker.controller.ts` — `/v1/worker/variables/:name` engine-only route.
-- `packages/server/api/src/app/variable/variable.module.ts` — Fastify module wrapper.
-- `packages/server/api/src/app/database/migration/postgres/1793000000000-AddVariableTable.ts` — schema migration.
-- `packages/server/engine/src/lib/piece-context/variable-resolver.ts` — engine-side resolver, mirrors `connection-resolver.ts`.
-- `packages/server/engine/src/lib/variables/props-resolver.ts` — adds the `variables` branch to `resolveSingleToken`.
-- `packages/core/shared/src/lib/automation/variable/variable.ts` — `Variable`, `VariableWithoutSensitiveData`, `VARIABLE_NAME_REGEX`.
-- `packages/core/shared/src/lib/automation/variable/dto/{upsert,read}-variable-request.ts` — request schemas.
-- `packages/web/src/features/variables/{api/variables.ts,hooks/variables-hooks.ts}` — frontend client + TanStack Query hooks.
-- `packages/web/src/app/routes/variables/index.tsx` — `/variables` list page.
-- `packages/web/src/app/variables/variable-dialog.tsx` — create / rotate dialog (reused by the page and the data-selector tab).
-- `packages/web/src/app/builder/data-selector/variables-tab.tsx` — builder side panel for inserting `variables['NAME']` mentions.
+- `packages/server/engine/src/lib/variables/props-resolver.ts` — `resolveSingleToken` and `preResolveFormulaVars`; dispatches each token by kind. Contains the `variables` branch (`VARIABLES` / `VARIABLES[`), which still parses `variables[...]` tokens even though no variable store backs them
+- `packages/server/engine/src/lib/variables/expression-evaluator.ts` — evaluates a resolved expression string
+- `packages/server/engine/src/lib/variables/props-processor.ts` — walks nested props structures and drives resolution
+- `packages/server/engine/src/lib/variables/processors/types.ts` — the per-type processor contract
+- `packages/server/engine/src/lib/variables/processors/index.ts` — the processor registry
+- `packages/server/engine/src/lib/variables/processors/text.ts` — text processor
+- `packages/server/engine/src/lib/variables/processors/number.ts` — number processor
+- `packages/server/engine/src/lib/variables/processors/json.ts` — JSON processor
+- `packages/server/engine/src/lib/variables/processors/array-zipper.ts` — array/zip processor
+- `packages/server/engine/src/lib/variables/processors/date-time.ts` — date/time processor
+- `packages/server/engine/src/lib/variables/processors/file.ts` — file processor
+- `packages/server/engine/src/lib/variables/processors/object.ts` — object processor
+- `packages/server/engine/src/lib/piece-context/variable-resolver.ts` — engine-side resolver, mirrors `connection-resolver.ts`
+- `packages/core/formula/src/lib/formula-evaluator.ts` — the `@inboxfm-connect/formula` evaluator used for step inputs and agent tool args
 
-## Edition Availability
-- Community (CE): available.
-- Enterprise (EE): available.
-- Cloud: available.
+## Surface Notes
+**Web console:** the `variablesQueries.useVariables(...)` frontend hook that used to render variable mention labels in the editor is **removed from this fork** — there is no variables API to call and no mention labels. The `packages/web/src/app/` and `packages/web/src/features/` trees this doc pointed at are upstream code that is **not present in this fork** (issue #346).
 
-No plan flag — the feature ships in every edition.
-
-## Permissions
-- `READ_VARIABLE` — list page, copy-reference, data-selector tab, mention resolution. Granted to VIEWER, EDITOR, ADMIN.
-- `WRITE_VARIABLE` — create / rotate / delete / reveal value. Granted to EDITOR and ADMIN; VIEWER cannot mutate.
-- The reveal endpoint additionally restricts the principal to `USER` (no SERVICE keys) and emits `VARIABLE_VALUE_REVEALED` on every hit so admins can audit who pulled which secret and when.
-
-## Domain Terms
-
-> Canonical term definitions live in the bounded-context glossaries — see [CONTEXT-MAP.md](../../CONTEXT-MAP.md).
-
-- **Variable**: an encrypted project-scoped secret keyed by a project-unique `name`.
-- **name**: stable identifier (alphanumeric + underscore, regex `^[a-zA-Z0-9_]+$`); used both as the display label and the mention key. Immutable after create.
-- **value**: opaque secret. Stored as `EncryptedObject` (`{ iv, data }`) wrapping `{ secret_text }`.
-- **Mention syntax**: `{{variables['NAME']}}`. Resolved by the engine at execution time to the plaintext value.
-
-## Entity
-
-**Variable**: id, created, updated, name, projectId, platformId, ownerId (nullable FK), value (EncryptedObject jsonb), metadata (jsonb, nullable). Unique index on `(projectId, name)`; index on `ownerId`.
-
-## Endpoints
-
-All mount under `/v1/variables`. Project-scoped via the body / query / `:id` lookup.
-
-| Method | Path | Auth | Permission | Description |
-|---|---|---|---|---|
-| POST | `/v1/variables` | USER + SERVICE | `WRITE_VARIABLE` | Upsert by `(projectId, name)`. Fires `VARIABLE_UPSERTED`. |
-| GET | `/v1/variables` | USER + SERVICE | `READ_VARIABLE` | Paginated list. Filters by `name` substring. |
-| POST | `/v1/variables/:id/reveal` | USER only | `WRITE_VARIABLE` | Returns `{ value }`. Fires `VARIABLE_VALUE_REVEALED`. |
-| DELETE | `/v1/variables/:id` | USER + SERVICE | `WRITE_VARIABLE` | Hard delete. Fires `VARIABLE_DELETED`. |
-
-Worker route (engine-only, via engine principal token):
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/v1/worker/variables/:name` | Returns the decrypted `{ value }` for the project carried in the engine principal. Called by the engine while resolving `{{variables['NAME']}}` mentions. |
-
-## Engine Resolution
-
-When the input contains an `ap-formula-v1::{...}` wrapper, `resolveInputAsync` routes the input through the formula evaluator first; the evaluator's `preResolveFormulaVars` calls back into the same `resolveSingleToken` path described below for each `{{var}}` it finds inside the expression. See `formula.md` for the wrapper format and pipeline.
-
-The engine's `resolveSingleToken` checks for the `variables` prefix first, then `connections`, then evaluates the token as a regular step reference. The `variables` branch:
-
-1. Parses the name out of `variables['NAME']` (bracket form) or `variables.NAME` (dot form).
-2. If `censoredInput` (used to build the redacted copy of the resolved input), returns `**REDACTED**`.
-3. Otherwise calls `createVariableResolver({ engineToken, projectId, apiUrl }).obtain(name)`, which fetches `/v1/worker/variables/:name` with the engine principal token.
-4. Returns the plaintext string. The mention always resolves to a `string`; there is no sub-field access (`.secret_text` is implicit).
-
-## Encryption
-
-`encryptUtils.encryptObject` (AES-256-CBC) on write. `encryptUtils.decryptObject<{ secret_text: string }>` on reveal and worker fetch.
-
-## Frontend
-
-The `/variables` page mirrors the connections page visually: an info Alert above a TanStack Data Table with search, owner column, bulk delete, and a per-row dropdown (`Edit` / `Copy reference` / `Copy value` / `Delete`). `Copy reference` writes `{{variables['NAME']}}` to the clipboard and is always enabled — copy and edit operations that need the plaintext (`Copy value`, `Edit`) require `WRITE_VARIABLE`. The builder data-selector exposes a "Variables" tab next to "Data"; inserting a row emits a mention chip that renders `Variable · <name>` with a key SVG icon.
-
-## Audit Events
-
-- `VARIABLE_UPSERTED` — `variable.upserted`. Fired on create or rotate.
-- `VARIABLE_DELETED` — `variable.deleted`. Fired on hard delete.
-- `VARIABLE_VALUE_REVEALED` — `variable.value.revealed`. Fired on every successful reveal (UI "Copy value" or direct API call). Use this to answer *"who pulled variable X and when"*.
+## Notes
+- Formula arguments reuse the same `resolveSingleToken` path, so connections, step references and any `variables[...]` mention all resolve through one code path.
+- `preResolveFormulaVars` and `resolveSingleToken` are real and current — unlike the store they once served.

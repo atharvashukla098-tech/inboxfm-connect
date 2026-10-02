@@ -276,33 +276,36 @@ export const recordService = {
             return []
         }
 
-        const firstRecord = await recordRepo().findOne({
-            where: { id: ids[0], projectId },
-            select: ['tableId'],
-        })
-        if (isNil(firstRecord)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'Record', entityId: ids[0] },
-            })
-        }
-
         const records = await recordRepo().find({
-            where: { id: In(ids), projectId, tableId: firstRecord.tableId },
+            where: { id: In(ids), projectId },
             relations: ['cells'],
-        })
-
-        await recordRepo().delete({
-            id: In(ids),
-            projectId,
-            tableId: firstRecord.tableId,
         })
 
         if (records.length === 0) {
             return []
         }
 
-        return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
+        const recordsByTable = new Map<string, typeof records>()
+        for (const record of records) {
+            const group = recordsByTable.get(record.tableId)
+            if (group) {
+                group.push(record)
+            }
+            else {
+                recordsByTable.set(record.tableId, [record])
+            }
+        }
+
+        for (const [tableId, tableRecords] of recordsByTable) {
+            const tableRecordIds = tableRecords.map((r) => r.id)
+            await recordRepo().delete({
+                id: In(tableRecordIds),
+                projectId,
+                tableId,
+            })
+        }
+
+        return formatRecordsAndFetchField({ records, tableId: records[0].tableId, projectId })
     },
 
     async deleteAll({

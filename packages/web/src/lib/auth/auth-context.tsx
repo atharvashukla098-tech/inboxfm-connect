@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     apiClient.setToken(newToken)
     setToken(newToken)
     setUser(newUser)
-    persistUser(newUser)
+    persistIdentity(newUser)
     if (projectId) {
       apiClient.setProjectId(projectId)
       const proj = projects.find((p) => p.id === projectId) || {
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = () => {
     apiClient.setToken(null)
     apiClient.setProjectId(null)
-    clearPersistedUser()
+    clearPersistedIdentity()
     setToken(null)
     setUser(null)
     setProjects([])
@@ -101,11 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const persistedUser = readPersistedUser()
-        if (persistedUser) {
-          setUser(persistedUser)
-        }
-
+        const persistedIdentity = readPersistedIdentity()
         const projectsData = await apiClient.get<{ data: Project[] }>('/projects')
         const loadedProjects = projectsData.data || []
         setProjects(loadedProjects)
@@ -116,14 +112,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCurrentProject(matched)
         }
 
-        if (!persistedUser) {
-          setUser({
-            id: 'session',
-            email: '',
-            firstName: '',
-            lastName: '',
-          })
-        }
+        // Only the authorization-relevant identity survives a reload. Email and name stay in
+        // memory for the current page view and are never written to storage, so consumers render
+        // their neutral placeholder until the next sign-in (issue #383).
+        setUser({
+          ...(persistedIdentity ?? { id: 'session', platformId: null, platformRole: null }),
+          email: '',
+          firstName: '',
+          lastName: '',
+        })
       } catch (err) {
         console.warn('Session load failed, clearing session', err)
         signOut()
@@ -166,25 +163,51 @@ export function useAuth(): AuthContextType {
   return context
 }
 
-const PERSISTED_USER_KEY = 'ap-user'
+const IDENTITY_KEY = 'ap-user'
 
-function persistUser(user: User): void {
-  if (typeof localStorage === 'undefined') return
-  localStorage.setItem(PERSISTED_USER_KEY, JSON.stringify(user))
+/**
+ * Only the fields the UI needs to authorize itself are persisted. Email and name are deliberately
+ * dropped: `localStorage` is readable by any script on the origin, so writing PII there parks it
+ * for anything that ever runs on the page (issue #383). `platformId`/`platformRole` add no
+ * privilege beyond the session JWT the browser already holds — they only stop the console from
+ * rendering admin-gated surfaces wrongly after a reload — so keeping them costs no exposure.
+ */
+type PersistedIdentity = Pick<User, 'id' | 'platformId' | 'platformRole'>
+
+function persistIdentity(user: User): void {
+    if (typeof localStorage === 'undefined') return
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(toPersistedIdentity(user)))
 }
 
-function readPersistedUser(): User | null {
-  if (typeof localStorage === 'undefined') return null
-  const raw = localStorage.getItem(PERSISTED_USER_KEY)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as User
-  } catch {
-    return null
-  }
+function readPersistedIdentity(): PersistedIdentity | null {
+    if (typeof localStorage === 'undefined') return null
+    const raw = localStorage.getItem(IDENTITY_KEY)
+    if (!raw) return null
+    try {
+        const parsed: unknown = JSON.parse(raw)
+        if (typeof parsed !== 'object' || parsed === null || !('id' in parsed)) {
+            return null
+        }
+        const identity = toPersistedIdentity(parsed)
+        // Rewrite immediately so a copy written by an older build — which carried email and name —
+        // is shrunk to the projection instead of lingering on disk.
+        persistIdentity(identity)
+        return identity
+    }
+    catch {
+        return null
+    }
 }
 
-function clearPersistedUser(): void {
-  if (typeof localStorage === 'undefined') return
-  localStorage.removeItem(PERSISTED_USER_KEY)
+function toPersistedIdentity(user: User): PersistedIdentity {
+    return {
+        id: user.id,
+        platformId: user.platformId ?? null,
+        platformRole: user.platformRole ?? null,
+    }
+}
+
+function clearPersistedIdentity(): void {
+    if (typeof localStorage === 'undefined') return
+    localStorage.removeItem(IDENTITY_KEY)
 }

@@ -6,17 +6,16 @@
 The Human Input feature exposes public-facing endpoints that allow external users to interact with flows via two interaction modes: **Forms** (structured input fields that trigger a flow and optionally wait for a response) and **Chat** (a conversational UI backed by a flow). Both modes use flows whose trigger is the `@inboxfm-connect/piece-forms` piece. The backend endpoints are read-only and fully public — they return metadata about the form or chat UI (title, input schema, platform branding) that the frontend uses to render the interaction. Flows must be published (or the `useDraft` flag must be set) for the endpoints to return data. The frontend renders the form at `/forms/<flowId>` and the chat at `/chat/<flowId>`.
 
 ## Key Files
-- `packages/server/api/src/app/flows/flow/human-input/form-controller.ts` — GET `/form/:flowId` endpoint
-- `packages/server/api/src/app/flows/flow/human-input/chat-controller.ts` — GET `/chat/:flowId` endpoint
-- `packages/server/api/src/app/flows/flow/human-input/human-input.service.ts` — resolves flow, validates trigger type, builds response
-- `packages/server/api/src/app/flows/flow/human-input/human-input.module.ts` — registers both controllers
-- `packages/core/shared/src/lib/automation/flows/form.ts` — `FormInputType`, `FormInput`, `FormProps`, `FormResponse`, `ChatUIProps`, `ChatUIResponse`, `USE_DRAFT_QUERY_PARAM_NAME`
-- `packages/web/src/features/forms/components/ap-form.tsx` — form rendering component
+- `packages/core/execution/src/lib/flows/form.ts` — `FormInputType`, `FormInput`, `FormProps`, `FormResponse`, `ChatUIProps`, `ChatUIResponse`, `USE_DRAFT_QUERY_PARAM_NAME`
 - `packages/web/src/features/forms/api/` — frontend API client for form metadata
 - `packages/web/src/features/forms/hooks/` — TanStack Query hooks
 - `packages/web/src/features/chat/` — chat UI components (bubble, input, message list, intro)
 - `packages/web/src/app/routes/forms/` — public-facing form page (`index.tsx`)
 - `packages/web/src/app/routes/chat/` — public-facing chat page (`index.tsx`), the reusable chat shell (`flow-chat.tsx`), and the in-builder Drawer wrapper used for testing `chat_submission`-trigger flows from the builder (`chat-drawer.tsx`, paired with `builder/state/chat-state.ts`)
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Fully available — no plan flag required.

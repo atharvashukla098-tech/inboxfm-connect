@@ -7,7 +7,6 @@ A built-in relational database feature that lets users store structured data dir
 - `packages/server/api/src/app/tables/table/table.service.ts` — table CRUD, export, webhook management
 - `packages/server/api/src/app/tables/table/table.controller.ts` — table endpoints
 - `packages/server/api/src/app/tables/table/table.entity.ts` — Table entity
-- `packages/server/api/src/app/tables/table/table-webhook.entity.ts` — TableWebhook entity
 - `packages/server/api/src/app/tables/field/field.service.ts` — field CRUD
 - `packages/server/api/src/app/tables/field/field.controller.ts` — field endpoints
 - `packages/server/api/src/app/tables/field/field.entity.ts` — Field entity
@@ -23,21 +22,10 @@ A built-in relational database feature that lets users store structured data dir
 - `packages/core/shared/src/lib/automation/tables/cell.ts` — Cell schema
 - `packages/core/shared/src/lib/automation/tables/table-webhook.ts` — TableWebhook schema
 - `packages/core/shared/src/lib/automation/tables/dto/` — request/response DTOs
-- `packages/web/src/app/routes/tables/id/index.tsx` — the table editor page (react-data-grid based)
-- `packages/web/src/features/tables/components/ap-table-header.tsx` — header bar with table name, actions
-- `packages/web/src/features/tables/components/ap-table-state-provider.tsx` — state context for the table
-- `packages/web/src/features/tables/components/ap-field-header.tsx` — column header with field actions
-- `packages/web/src/features/tables/components/table-columns.tsx` — column definitions for react-data-grid
-- `packages/web/src/features/tables/components/editable-cell.tsx` — cell editing wrapper
-- `packages/web/src/features/tables/components/ap-table-actions-menu.tsx` — table-level action menu
-- `packages/web/src/features/tables/components/import-table-dialog.tsx` — CSV import dialog
-- `packages/web/src/features/tables/components/new-field-popup.tsx` — add field popup
-- `packages/web/src/features/tables/hooks/table-hooks.ts` — React Query hooks for tables/fields/records
-- `packages/web/src/features/tables/stores/store/ap-tables-client-state.tsx` — optimistic client-side state
-- `packages/web/src/features/tables/stores/store/ap-tables-server-state.ts` — server-synced state
-- `packages/web/src/features/tables/api/tables-api.ts` — table API calls
-- `packages/web/src/features/tables/api/fields-api.ts` — field API calls
-- `packages/web/src/features/tables/api/records-api.ts` — record API calls
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - Community (CE): available

@@ -12,19 +12,11 @@ Exposes an Activepieces project as a Model Context Protocol (MCP) server so that
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow for MCP clients that require OAuth
 - `packages/core/shared/src/lib/automation/mcp/mcp.ts` — McpServer schema, McpToolDefinition type
 - `packages/core/shared/src/lib/automation/mcp/mcp-oauth.ts` — MCP OAuth types
-- `packages/web/src/app/components/project-settings/mcp-server/index.tsx` — project settings panel for MCP
-- `packages/web/src/app/components/project-settings/mcp-server/mcp-credentials.tsx` — token display and rotate UI
-- `packages/web/src/app/components/project-settings/mcp-server/mcp-flows.tsx` — list of flows exposed as tools
-- `packages/web/src/app/components/project-settings/mcp-server/mcp-tools.tsx` — controllable tool toggle UI
-- `packages/web/src/app/routes/mcp-authorize/index.tsx` — OAuth authorization page for MCP clients
-- `packages/web/src/app/routes/mcp-authorize/permission-item.tsx` — shared permission-item component used by the MCP OAuth consent screens
-- `packages/web/src/app/routes/embed/embedded-mcp-authorize-dialog.tsx` — in-embed MCP OAuth consent dialog for managed-auth (embedded) users
-- `packages/web/src/app/routes/embed/embedded-mcp-settings-dialog.tsx` — in-embed MCP settings dialog for managed-auth (embedded) users
 - `packages/ee/embed-sdk/src/index.ts` — embed SDK; adds `authorizeMcp()` (in-embed OAuth consent), `mcpSettings()` (MCP settings dialog), and `generateMcpToken()` (mints `{ mcpServerUrl, mcpToken }` for the embed user's project without the OAuth flow) public methods
-- `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/index.tsx` — dialog to add an external MCP server as an agent tool
-- `packages/web/src/features/agents/agent-tools/mcp-tool-dialog/add-mcp-tool-form.tsx` — form inside the dialog
-- `packages/web/src/features/agents/agent-tools/components/mcp-tool.tsx` — inline display of an MCP tool in agent settings
-- `packages/web/src/app/builder/test-step/custom-test-step/mcp-tool-testing-dialog.tsx` — test an individual MCP tool from the builder
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - Community (CE): available

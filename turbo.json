@@ -1,171 +1,258 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "globalPassThroughEnv": [
-    "AP_EDITION",
-    "REDISMS_VERSION",
-    "AP_DB_TYPE",
-    "AP_POSTGRES_HOST",
-    "AP_POSTGRES_PORT",
-    "AP_POSTGRES_USERNAME",
-    "AP_POSTGRES_PASSWORD",
-    "AP_POSTGRES_DATABASE",
-    "LOG_FILE",
-    "LOG_LEVEL",
-    "LOG_PRETTY",
-    "AP_LOG_FILE",
-    "AP_LOG_LEVEL",
-    "AP_LOG_PRETTY",
-    "AP_SMTP_HOST",
-    "AP_SMTP_PORT",
-    "AP_SMTP_USERNAME",
-    "AP_SMTP_PASSWORD",
-    "AP_SMTP_SENDER_EMAIL",
-    "AP_SMTP_SENDER_NAME"
-  ],
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": [],
-      "inputs": [
-        "src/**",
-        "tsconfig*.json",
-        "package.json",
-        "!src/**/*.spec.ts",
-        "!src/**/*.test.ts",
-        "!vitest.config.*"
-      ],
-      "cache": false
-    },
-    "api#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"],
-      "cache": false,
-      "inputs": [
-        "src/**",
-        "tsconfig*.json",
-        "package.json",
-        "!src/**/*.spec.ts",
-        "!src/**/*.test.ts"
-      ]
-    },
-    "@inboxfm-connect/engine#build": {
-      "dependsOn": [],
-      "outputs": ["../../../dist/packages/engine/**"],
-      "cache": false,
-      "inputs": [
-        "src/**",
-        "tsconfig*.json",
-        "package.json",
-        "esbuild.config.mjs",
-        "!src/**/*.spec.ts",
-        "!src/**/*.test.ts"
-      ]
-    },
-    "ee-embed-sdk#bundle": {
-      "dependsOn": [],
-      "inputs": [
-        "src/**",
-        "tsconfig*.json",
-        "package.json",
-        "webpack.config.js"
-      ],
-      "outputs": ["../../../dist/packages/ee/embed-sdk/**"],
-      "cache": false
-    },
-    "bundle": {
-      "dependsOn": ["build", "@inboxfm-connect/cli#build"],
-      "inputs": ["src/**", "package.json"],
-      "outputs": ["dist/index.bundle.js", "dist/package.json"]
-    },
-    "@inboxfm-connect/engine#test": {
-      "dependsOn": [
-        "build",
-        "@inboxfm-connect/piece-http#build",
-        "@inboxfm-connect/piece-data-mapper#build",
-        "@inboxfm-connect/piece-approval#build",
-        "@inboxfm-connect/piece-webhook#build"
-      ],
-      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
-      "outputs": ["coverage/**"]
-    },
-    "lint": {
-      "dependsOn": ["^build"],
-      "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
-      "outputs": []
-    },
-    "test": {
-      "dependsOn": ["build"],
-      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
-      "outputs": ["coverage/**"]
-    },
-    "test-unit": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "@inboxfm-connect/engine#test-unit": {
-      "dependsOn": [
-        "build",
-        "@inboxfm-connect/piece-http#build",
-        "@inboxfm-connect/piece-data-mapper#build",
-        "@inboxfm-connect/piece-approval#build",
-        "@inboxfm-connect/piece-webhook#build"
-      ],
-      "cache": false
-    },
-    "test-integration": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "@inboxfm-connect/engine#test-integration": {
-      "dependsOn": [
-        "build",
-        "@inboxfm-connect/piece-http#build",
-        "@inboxfm-connect/piece-data-mapper#build",
-        "@inboxfm-connect/piece-approval#build",
-        "@inboxfm-connect/piece-webhook#build"
-      ],
-      "cache": false
-    },
-    "test-ce": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "test-ee": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "test-cloud": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "check-migrations": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "generate": {
-      "dependsOn": ["^build"],
-      "cache": false
-    },
-    "generate:check": {
-      "dependsOn": ["^build"],
-      "cache": false
-    },
-    "db-migration": {
-      "dependsOn": ["build"],
-      "cache": false
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "serve": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "persistent": true
-    },
-    "typecheck": {
-      "dependsOn": ["^build"],
-      "outputs": []
-    }
-  }
+    "$schema":  "https://turbo.build/schema.json",
+    "globalPassThroughEnv":  [
+                                 "AP_EDITION",
+                                 "REDISMS_VERSION",
+                                 "AP_DB_TYPE",
+                                 "AP_POSTGRES_HOST",
+                                 "AP_POSTGRES_PORT",
+                                 "AP_POSTGRES_USERNAME",
+                                 "AP_POSTGRES_PASSWORD",
+                                 "AP_POSTGRES_DATABASE",
+                                 "LOG_FILE",
+                                 "LOG_LEVEL",
+                                 "LOG_PRETTY",
+                                 "AP_LOG_FILE",
+                                 "AP_LOG_LEVEL",
+                                 "AP_LOG_PRETTY",
+                                 "AP_SMTP_HOST",
+                                 "AP_SMTP_PORT",
+                                 "AP_SMTP_USERNAME",
+                                 "AP_SMTP_PASSWORD",
+                                 "AP_SMTP_SENDER_EMAIL",
+                                 "AP_SMTP_SENDER_NAME"
+                             ],
+    "tasks":  {
+                  "build":  {
+                                "dependsOn":  [
+                                                  "^build"
+                                              ],
+                                "outputs":  [
+
+                                            ],
+                                "inputs":  [
+                                               "src/**",
+                                               "tsconfig*.json",
+                                               "package.json",
+                                               "!src/**/*.spec.ts",
+                                               "!src/**/*.test.ts",
+                                               "!vitest.config.*"
+                                           ],
+                                "cache":  false
+                            },
+                  "api#build":  {
+                                    "dependsOn":  [
+                                                      "^build"
+                                                  ],
+                                    "outputs":  [
+                                                    "dist/**"
+                                                ],
+                                    "cache":  false,
+                                    "inputs":  [
+                                                   "src/**",
+                                                   "tsconfig*.json",
+                                                   "package.json",
+                                                   "!src/**/*.spec.ts",
+                                                   "!src/**/*.test.ts"
+                                               ]
+                                },
+                  "@inboxfm-connect/engine#build":  {
+                                                        "dependsOn":  [
+
+                                                                      ],
+                                                        "outputs":  [
+                                                                        "../../../dist/packages/engine/**"
+                                                                    ],
+                                                        "cache":  false,
+                                                        "inputs":  [
+                                                                       "src/**",
+                                                                       "tsconfig*.json",
+                                                                       "package.json",
+                                                                       "esbuild.config.mjs",
+                                                                       "!src/**/*.spec.ts",
+                                                                       "!src/**/*.test.ts"
+                                                                   ]
+                                                    },
+                  "ee-embed-sdk#bundle":  {
+                                              "dependsOn":  [
+
+                                                            ],
+                                              "inputs":  [
+                                                             "src/**",
+                                                             "tsconfig*.json",
+                                                             "package.json",
+                                                             "webpack.config.js"
+                                                         ],
+                                              "outputs":  [
+                                                              "../../../dist/packages/ee/embed-sdk/**"
+                                                          ],
+                                              "cache":  false
+                                          },
+                  "bundle":  {
+                                 "dependsOn":  [
+                                                   "build",
+                                                   "@inboxfm-connect/cli#build"
+                                               ],
+                                 "inputs":  [
+                                                "src/**",
+                                                "package.json"
+                                            ],
+                                 "outputs":  [
+                                                 "dist/index.bundle.js",
+                                                 "dist/package.json"
+                                             ]
+                             },
+                  "@inboxfm-connect/engine#test":  {
+                                                       "dependsOn":  [
+                                                                         "build",
+                                                                         "@inboxfm-connect/piece-http#build",
+                                                                         "@inboxfm-connect/piece-data-mapper#build",
+                                                                         "@inboxfm-connect/piece-approval#build",
+                                                                         "@inboxfm-connect/piece-webhook#build"
+                                                                     ],
+                                                       "inputs":  [
+                                                                      "src/**",
+                                                                      "test/**",
+                                                                      "tsconfig*.json",
+                                                                      "vitest.config.*"
+                                                                  ],
+                                                       "outputs":  [
+                                                                       "coverage/**"
+                                                                   ]
+                                                   },
+                  "lint":  {
+                               "dependsOn":  [
+                                                 "^build"
+                                             ],
+                               "inputs":  [
+                                              "src/**",
+                                              ".eslintrc.json",
+                                              "../../.eslintrc.json"
+                                          ],
+                               "outputs":  [
+
+                                           ]
+                           },
+                  "test":  {
+                               "dependsOn":  [
+                                                 "build"
+                                             ],
+                               "inputs":  [
+                                              "src/**",
+                                              "test/**",
+                                              "tsconfig*.json",
+                                              "vitest.config.*"
+                                          ],
+                               "outputs":  [
+                                               "coverage/**"
+                                           ]
+                           },
+                  "test-unit":  {
+                                    "dependsOn":  [
+                                                      "build"
+                                                  ],
+                                    "cache":  false
+                                },
+                  "test-coverage":  {
+                                        "dependsOn":  [
+                                                          "build"
+                                                      ],
+                                        "inputs":  [
+                                                       "src/**",
+                                                       "test/**",
+                                                       "tsconfig*.json",
+                                                       "vitest.config.*"
+                                                   ],
+                                        "outputs":  [
+                                                        "coverage/**"
+                                                    ]
+                                    },
+                  "@inboxfm-connect/engine#test-unit":  {
+                                                            "dependsOn":  [
+                                                                              "build",
+                                                                              "@inboxfm-connect/piece-http#build",
+                                                                              "@inboxfm-connect/piece-data-mapper#build",
+                                                                              "@inboxfm-connect/piece-approval#build",
+                                                                              "@inboxfm-connect/piece-webhook#build"
+                                                                          ],
+                                                            "cache":  false
+                                                        },
+                  "test-integration":  {
+                                           "dependsOn":  [
+                                                             "build"
+                                                         ],
+                                           "cache":  false
+                                       },
+                  "@inboxfm-connect/engine#test-integration":  {
+                                                                   "dependsOn":  [
+                                                                                     "build",
+                                                                                     "@inboxfm-connect/piece-http#build",
+                                                                                     "@inboxfm-connect/piece-data-mapper#build",
+                                                                                     "@inboxfm-connect/piece-approval#build",
+                                                                                     "@inboxfm-connect/piece-webhook#build"
+                                                                                 ],
+                                                                   "cache":  false
+                                                               },
+                  "test-ce":  {
+                                  "dependsOn":  [
+                                                    "build"
+                                                ],
+                                  "cache":  false
+                              },
+                  "test-ee":  {
+                                  "dependsOn":  [
+                                                    "build"
+                                                ],
+                                  "cache":  false
+                              },
+                  "test-cloud":  {
+                                     "dependsOn":  [
+                                                       "build"
+                                                   ],
+                                     "cache":  false
+                                 },
+                  "check-migrations":  {
+                                           "dependsOn":  [
+                                                             "build"
+                                                         ],
+                                           "cache":  false
+                                       },
+                  "generate":  {
+                                   "dependsOn":  [
+                                                     "^build"
+                                                 ],
+                                   "cache":  false
+                               },
+                  "generate:check":  {
+                                         "dependsOn":  [
+                                                           "^build"
+                                                       ],
+                                         "cache":  false
+                                     },
+                  "db-migration":  {
+                                       "dependsOn":  [
+                                                         "build"
+                                                     ],
+                                       "cache":  false
+                                   },
+                  "dev":  {
+                              "cache":  false,
+                              "persistent":  true
+                          },
+                  "serve":  {
+                                "dependsOn":  [
+                                                  "^build"
+                                              ],
+                                "cache":  false,
+                                "persistent":  true
+                            },
+                  "typecheck":  {
+                                    "dependsOn":  [
+                                                      "^build"
+                                                  ],
+                                    "outputs":  [
+
+                                                ]
+                                }
+              }
 }

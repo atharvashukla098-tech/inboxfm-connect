@@ -8,9 +8,10 @@ OAuth Apps allow platform owners to register their own OAuth 2.0 application cre
 - `packages/server/api/src/app/ee/oauth-apps/oauth-app.service.ts` — CRUD service with encryption
 - `packages/server/api/src/app/ee/oauth-apps/oauth-app.entity.ts` — TypeORM entity
 - `packages/core/shared/src/lib/ee/oauth-apps/oauth-app.ts` — `OAuthApp`, `UpsertOAuth2AppRequest`, `ListOAuth2AppRequest` types
-- `packages/web/src/features/connections/api/oauth-apps.ts` — frontend API client
-- `packages/web/src/features/connections/hooks/oauth-apps-hooks.ts` — React query hooks
-- `packages/web/src/app/routes/platform/setup/pieces/update-oauth2-dialog.tsx` — UI dialog for configuring OAuth app credentials
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 No explicit plan flag gate. The module is available to all platform users (list endpoint uses `publicPlatform` security; create/delete use `platformAdminOnly`).

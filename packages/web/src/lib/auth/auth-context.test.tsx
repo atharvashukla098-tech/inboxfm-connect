@@ -54,11 +54,12 @@ afterEach(() => {
 })
 
 describe('auth session restore', () => {
-  it('never calls the non-existent GET /users/me and keeps the real project', async () => {
-    // The apiClient is a singleton that cached localStorage at import time, so seed it
+  it('shrinks a legacy PII-bearing ap-user to the non-privileged projection', async () => {
+    // The apiClient is a singleton that cached storage at import time, so seed it
     // through its setters (which loadSession reads via apiClient.getToken/getProjectId).
     apiClient.setToken('real-jwt')
     apiClient.setProjectId(REAL_PROJECT_ID)
+    // A copy as written by a pre-#383 build: full user object, PII included.
     localStorage.setItem('ap-user', JSON.stringify(REAL_USER))
 
     const { calls } = stubApi([
@@ -76,14 +77,22 @@ describe('auth session restore', () => {
 
     expect(calls.some((c) => c.includes('/users/me'))).toBe(false)
     expect(capturedAuth?.isAuthenticated).toBe(true)
-    expect(capturedAuth?.user?.email).toBe('dev@ap.com')
     expect(capturedAuth?.currentProject?.id).toBe(REAL_PROJECT_ID)
     // The dev-mock project must never clobber a valid restored session.
     expect(capturedAuth?.currentProject?.id).not.toBe('proj_default')
     expect(apiClient.getProjectId()).toBe(REAL_PROJECT_ID)
+
+    // Issue #383: the stored blob is rewritten to the projection on sight, so the PII an older
+    // build left at rest is removed instead of lingering, and it is never rehydrated in memory.
+    const stored = JSON.parse(localStorage.getItem('ap-user') as string)
+    expect(Object.keys(stored).sort()).toEqual(['id', 'platformId', 'platformRole'])
+    expect(capturedAuth?.user?.email).toBe('')
+    expect(capturedAuth?.user?.firstName).toBe('')
+    expect(storageDump()).not.toContain(REAL_USER.email)
+    expect(storageDump()).not.toContain(REAL_USER.firstName)
   })
 
-  it('persists the flat sign-in payload as the user and survives a remount', async () => {
+  it('keeps the user PII in memory only and restores only the role', async () => {
     stubApi([
       {
         match: (url) => url.pathname.endsWith('/api/v1/projects'),
@@ -103,15 +112,26 @@ describe('auth session restore', () => {
       capturedAuth!.signIn('real-jwt', REAL_USER, REAL_PROJECT_ID)
     })
 
+    // The signed-in page view still has the real identity…
     expect(capturedAuth?.user?.id).toBe(REAL_USER.id)
-    expect(localStorage.getItem('ap-user')).toContain('dev@ap.com')
+    expect(capturedAuth?.user?.email).toBe(REAL_USER.email)
+    // …but only the authorization-relevant projection is persisted. platformRole must survive a
+    // reload or admin-gated surfaces render as locked; email and name must not.
+    expect(JSON.parse(localStorage.getItem('ap-user') as string)).toEqual({
+      id: REAL_USER.id,
+      platformId: REAL_USER.platformId,
+      // Absent on the fixture; the projection normalizes it so the stored shape is stable.
+      platformRole: null,
+    })
+    expect(storageDump()).not.toContain(REAL_USER.email)
+    expect(storageDump()).not.toContain(REAL_USER.firstName)
     // Token + project moved to sessionStorage (issue #383)
     expect(sessionStorage.getItem('ap-token')).toBe('real-jwt')
     expect(sessionStorage.getItem('ap-project-id')).toBe(REAL_PROJECT_ID)
     expect(localStorage.getItem('ap-token')).toBeNull()
   })
 
-  it('signOut clears the persisted identity', async () => {
+  it('signOut clears any legacy persisted identity', async () => {
     apiClient.setToken('real-jwt')
     apiClient.setProjectId(REAL_PROJECT_ID)
     localStorage.setItem('ap-user', JSON.stringify(REAL_USER))
@@ -136,3 +156,18 @@ describe('auth session restore', () => {
     expect(capturedAuth?.isAuthenticated).toBe(false)
   })
 })
+
+// Everything currently sitting in either web storage, so a test can assert that a specific value
+// is nowhere on disk rather than checking one known key at a time.
+function storageDump(): string {
+  const entries: Record<string, string | null> = {}
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i)
+    if (key !== null) entries[`local:${key}`] = localStorage.getItem(key)
+  }
+  for (let i = 0; i < sessionStorage.length; i += 1) {
+    const key = sessionStorage.key(i)
+    if (key !== null) entries[`session:${key}`] = sessionStorage.getItem(key)
+  }
+  return JSON.stringify(entries)
+}

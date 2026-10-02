@@ -1,5 +1,6 @@
 import { createAction, Property, OAuth2PropertyValue } from '@inboxfm-connect/pieces-framework';
 import { bexioAuth } from '../auth';
+import { fetchBexioListOrLog } from '../common';
 import { BexioClient } from '../common/client';
 
 export const createSalesQuoteAction = createAction({
@@ -482,24 +483,32 @@ export const createSalesQuoteAction = createAction({
         let taxes: Array<{ id: number; name: string; percentage: string }> = [];
 
         if (auth) {
-          try {
-            const client = new BexioClient(auth);
-            units = await client.get<Array<{ id: number; name: string }>>('/2.0/unit').catch(() => []);
-            accounts = await client.get<Array<{ id: number; account_no: string; name: string }>>('/accounts').catch(() => []);
-            const taxesResponse = await client.get<Array<{
-              id: number;
-              name: string;
-              value: number;
-              display_name?: string;
-            }>>('/3.0/taxes?types=sales_tax&scope=active').catch(() => []);
-            taxes = taxesResponse.map((tax) => ({
-              id: tax.id,
-              name: tax.display_name || tax.name,
-              percentage: tax.value.toString(),
-            }));
-          } catch (error) {
-            // Ignore error, use empty array as fallback
-          }
+          const client = new BexioClient(auth);
+          units = await fetchBexioListOrLog<{ id: number; name: string }>({
+            client,
+            endpoint: '/2.0/unit',
+            label: 'units',
+          });
+          accounts = await fetchBexioListOrLog<{ id: number; account_no: string; name: string }>({
+            client,
+            endpoint: '/accounts',
+            label: 'accounts',
+          });
+          const taxesResponse = await fetchBexioListOrLog<{
+            id: number;
+            name: string;
+            value: number;
+            display_name?: string;
+          }>({
+            client,
+            endpoint: '/3.0/taxes?types=sales_tax&scope=active',
+            label: 'taxes',
+          });
+          taxes = taxesResponse.map((tax) => ({
+            id: tax.id,
+            name: tax.display_name || tax.name,
+            percentage: tax.value.toString(),
+          }));
         }
 
         const unitOptions = units.map((unit) => ({ label: unit.name, value: unit.id }));

@@ -9,10 +9,12 @@ The User Invitations feature lets platform owners and project members with the `
 - `packages/server/api/src/app/user-invitations/user-invitation.entity.ts` — TypeORM entity
 - `packages/core/shared/src/lib/management/invitations/index.ts` — `UserInvitation`, `InvitationType`, `InvitationStatus`, `SendUserInvitationRequest`, `AcceptUserInvitationRequest`, `ListUserInvitationsRequest`
 - `packages/web/src/features/members/components/invite-user/` — invite user dialog
-- `packages/web/src/features/members/components/invitation-card.tsx` — displays a pending invitation with revoke action
-- `packages/web/src/features/members/components/accept-invitation.tsx` — accept flow for incoming invitation links
 - `packages/web/src/features/members/api/` — frontend API client for invitations
 - `packages/web/src/features/members/hooks/` — TanStack Query hooks
+
+## Surface Notes
+**Web console:** the `packages/web/src/app/` and `packages/web/src/features/` trees this doc previously pointed at are upstream code that is **not present in this fork**. The console is a thin developer surface: API clients in `packages/web/src/lib/api/`, React Query hooks in `packages/web/src/lib/query/hooks.ts`, components in `packages/web/src/components/`, pages in `packages/web/src/pages/`. Do not go looking for the old paths (issue #346).
+
 
 ## Edition Availability
 - **Community (CE)**: Platform invitations available. Project invitations require `projectRolesEnabled` plan flag (gated via `projectMustBeTeamType` and `platformMustHaveFeatureEnabled`).
