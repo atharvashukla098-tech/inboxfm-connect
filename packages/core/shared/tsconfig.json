@@ -1,7 +1,7 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "esnext",
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -11,13 +11,13 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@inboxfm-connect/core-utils": [
-        "packages/core/utils/dist/src/index.d.ts"
+        "../utils/dist/src/index.d.ts"
       ],
       "@inboxfm-connect/core-formula": [
-        "packages/core/formula/dist/src/index.d.ts"
+        "../formula/dist/src/index.d.ts"
       ],
       "@inboxfm-connect/core-execution": [
-        "packages/core/execution/dist/src/index.d.ts"
+        "../execution/dist/src/index.d.ts"
       ]
     }
   },
